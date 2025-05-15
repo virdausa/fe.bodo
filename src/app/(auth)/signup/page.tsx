@@ -16,11 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { signUp } from "@/api/services/auth";
+import { signUp } from "@/api/services/auth.service";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { signupSchema } from "@/api/schemas/auth";
+import { signupSchema } from "@/api/schemas/auth.schema";
 
 function SignupForm() {
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -37,7 +37,7 @@ function SignupForm() {
     try {
       await signUp(values);
       toast.success(`Welcome ${values.username}`);
-      router.push("/dashboard");
+      router.push("/onboarding");
     } catch (error) {
       toast.error("There is an error while signing you in");
       console.log(error);

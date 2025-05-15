@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function AuthLayout({
   children,
@@ -7,8 +7,8 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const session = cookieStore.get("session");
-  if (session) {
+  const hasSession = cookieStore.get("loggedIn");
+  if (hasSession) {
     return redirect("/dashboard");
   }
 

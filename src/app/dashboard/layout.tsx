@@ -1,8 +1,9 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { baseUrl } from "@/api";
 
 export default async function DashboardLayout({
   children,
@@ -10,12 +11,23 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const session = cookieStore.get("session");
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
-  if (!session) {
+  const hasSession = cookieStore.get("loggedIn");
+  if (!hasSession) {
     return redirect("/signin");
   }
+
+  const response = await fetch(`${baseUrl}/profiles/me`, {
+    headers: {
+      Cookie: cookies().toString(),
+    },
+  });
+  if (!response.ok) {
+    return redirect("/onboarding");
+  }
+
+  const profile = await response.json();
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>

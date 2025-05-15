@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 export default async function Home() {
   const cookieStore = await cookies();
-  const session = cookieStore.get("session");
-  if (session) {
+  const hasSession = cookieStore.get("loggedIn");
+  if (hasSession) {
     return redirect("/dashboard");
   }
   return redirect("/signin");

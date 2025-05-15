@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { signOut as signOutService } from "@/api/services/auth";
+import { signOut as signOutService } from "@/api/services/auth.service";
 import {
   AlertDialog,
   AlertDialogAction,

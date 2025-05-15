@@ -16,11 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { signIn } from "@/api/services/auth";
+import { signIn } from "@/api/services/auth.service";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { signinSchema } from "@/api/schemas/auth";
+import { signinSchema } from "@/api/schemas/auth.schema";
 
 function SigninForm() {
   const form = useForm<z.infer<typeof signinSchema>>({
