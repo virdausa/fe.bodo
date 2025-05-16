@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useUserStore } from "@/providers/user.provider";
 
 interface INavItem {
   title: string;
@@ -71,6 +72,8 @@ const items: IMainNav[] = [
 ];
 
 function AppSidebar() {
+  const { user, profile } = useUserStore((state) => state);
+
   async function signOut() {
     await signOutService();
     redirect("/signin");
@@ -82,10 +85,12 @@ function AppSidebar() {
         <div className="mt-3 flex flex-col px-2">
           <Avatar className="mb-1 size-14">
             <AvatarImage className="size-14" src="/avatar.jpg" />
-            <AvatarFallback className="size-14">BG</AvatarFallback>
+            <AvatarFallback className="size-14">JD</AvatarFallback>
           </Avatar>
-          <span className="font-semibold">John Doe</span>
-          <span className="text-muted-foreground text-xs">@username</span>
+          <span className="font-semibold">{profile.name}</span>
+          <span className="text-muted-foreground text-xs">
+            @{user.username}
+          </span>
         </div>
       </SidebarHeader>
       <Separator />

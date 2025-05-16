@@ -46,7 +46,7 @@ export default function OnboardingPage() {
     }
 
     initialOnboarding();
-  });
+  }, [router]);
 
   async function onSubmit(values: z.infer<typeof profileSchema>) {
     try {

@@ -15,4 +15,7 @@ const profileSchema = z.object({
 
 const partialProfileSchema = profileSchema.partial();
 
+type Profile = z.infer<typeof profileSchema>;
+
+export type { Profile };
 export { profileSchema, partialProfileSchema };

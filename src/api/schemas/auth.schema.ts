@@ -43,4 +43,7 @@ const signupSchema = z
     path: ["confirmPassword"],
   });
 
+type User = { username: string };
+
+export type { User };
 export { signinSchema, signupSchema };
