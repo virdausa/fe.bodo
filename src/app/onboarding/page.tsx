@@ -21,12 +21,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect } from "react";
 import Image from "next/image";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function OnboardingPage() {
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: "",
+      isProfessor: false,
     },
   });
   const router = useRouter();
@@ -94,6 +96,26 @@ export default function OnboardingPage() {
                             This is your full name
                           </FormDescription>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="isProfessor"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4 shadow">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Are you a professor?</FormLabel>
+                            <FormDescription>
+                              You cannot change this setting later
+                            </FormDescription>
+                          </div>
                         </FormItem>
                       )}
                     />

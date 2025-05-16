@@ -17,8 +17,8 @@ export default function UserInitializer() {
       }
 
       const me = await response.json();
-      updateUser({ username: me.username });
-      updateProfile({ name: me.name });
+      updateUser(me.user);
+      updateProfile(me.profile);
     }
 
     fetchProfile();

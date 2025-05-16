@@ -1,24 +1,27 @@
 import { z } from "zod";
 import { api } from "@/api";
-import { partialProfileSchema, profileSchema } from "../schemas/profile.schema";
+import {
+  partialProfileSchema,
+  Profile,
+  profileSchema,
+} from "../schemas/profile.schema";
+import { User } from "../schemas/auth.schema";
 
-type profileResponse = z.infer<typeof profileSchema>;
-type profileWithUsernameResponse = z.infer<typeof profileSchema> & {
-  username: string;
-};
+type ProfileResponse = z.infer<typeof profileSchema>;
+type ProfileWithUserResponse = { profile: Profile; user: User };
 
 async function getMe() {
-  const response = await api.get<profileWithUsernameResponse>("profiles/me");
+  const response = await api.get<ProfileWithUserResponse>("profiles/me");
   return response;
 }
 
 async function getProfile(id: number) {
-  const response = await api.get<profileResponse>(`profiles/${id}`);
+  const response = await api.get<ProfileResponse>(`profiles/${id}`);
   return response;
 }
 
 async function createProfile(body: z.infer<typeof profileSchema>) {
-  const response = await api.post<profileResponse>("profiles", {
+  const response = await api.post<ProfileResponse>("profiles", {
     headers: {
       "content-type": "application/json",
     },
@@ -31,7 +34,7 @@ async function updateProfile(
   id: number,
   body: z.infer<typeof partialProfileSchema>,
 ) {
-  const response = await api.patch<profileResponse>(`profiles/${id}`, {
+  const response = await api.patch<ProfileResponse>(`profiles/${id}`, {
     headers: {
       "content-type": "application/json",
     },
@@ -45,5 +48,5 @@ async function deleteProfiles(id: number) {
   return response;
 }
 
-export type { profileResponse, profileWithUsernameResponse };
+export type { ProfileResponse, ProfileWithUserResponse };
 export { getMe, getProfile, createProfile, updateProfile, deleteProfiles };

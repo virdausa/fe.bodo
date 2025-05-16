@@ -11,6 +11,7 @@ const profileSchema = z.object({
     .regex(fullNameRegex, {
       message: "Please enter your full name (at least two words, letters only)",
     }),
+  isProfessor: z.boolean().default(false).optional(),
 });
 
 const partialProfileSchema = profileSchema.partial();

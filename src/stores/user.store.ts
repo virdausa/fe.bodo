@@ -15,7 +15,7 @@ type UserAction = {
 type UserStore = UserState & UserAction;
 
 const initialState: UserState = {
-  user: { username: "" },
+  user: { username: "", isProfessor: false },
   profile: { name: "" },
 };
 
