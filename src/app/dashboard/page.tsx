@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +12,12 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useUserStore } from "@/providers/user.provider";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+function CreateClassModal() {
+  const [open, setOpen] = useState<boolean>(false);
+}
 
 export default function DashboardPage() {
   const { profile } = useUserStore((state) => state);
