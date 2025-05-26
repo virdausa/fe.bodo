@@ -7,7 +7,9 @@ import { useUserStore } from "@/providers/user.provider";
 
 export default function UserInitializer() {
   const router = useRouter();
-  const { updateUser, updateProfile } = useUserStore((state) => state);
+  const { updateUser, updateProfile, updateInitialized } = useUserStore(
+    (state) => state,
+  );
 
   useEffect(() => {
     async function fetchProfile() {
@@ -19,10 +21,11 @@ export default function UserInitializer() {
       const me = await response.json();
       updateUser(me.user);
       updateProfile(me.profile);
+      updateInitialized(true);
     }
 
     fetchProfile();
-  }, [router, updateProfile, updateUser]);
+  }, [router, updateProfile, updateUser, updateInitialized]);
 
   return <></>;
 }

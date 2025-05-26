@@ -5,18 +5,21 @@ import { createStore } from "zustand/vanilla";
 type UserState = {
   user: User;
   profile: Profile;
+  isInitialized: boolean;
 };
 
 type UserAction = {
   updateUser: (user: User) => void;
   updateProfile: (profile: Profile) => void;
+  updateInitialized: (isInitialized: boolean) => void;
 };
 
 type UserStore = UserState & UserAction;
 
 const initialState: UserState = {
-  user: { username: "", isProfessor: false },
-  profile: { name: "" },
+  user: { username: "" },
+  profile: { name: "", isProfessor: false },
+  isInitialized: false,
 };
 
 const createUserStore = (initState: UserState = initialState) => {
@@ -24,6 +27,10 @@ const createUserStore = (initState: UserState = initialState) => {
     ...initState,
     updateUser: (user) => set(() => ({ user })),
     updateProfile: (profile) => set(() => ({ profile })),
+    updateInitialized: (isInitialized) =>
+      set(() => ({
+        isInitialized,
+      })),
   }));
 };
 
