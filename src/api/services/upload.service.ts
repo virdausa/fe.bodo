@@ -1,6 +1,6 @@
 import { api } from "..";
 
-type UploadResponse = { downloadPage: string };
+type UploadResponse = { data: { downloadPage: string } };
 
 async function uploadFile(file: File) {
   const form = new FormData();
