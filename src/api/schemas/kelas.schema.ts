@@ -21,7 +21,11 @@ const kelasSchema = createKelasSchema.extend({
   professor: professorSchema.optional(),
 });
 
+const joinClassSchema = z.object({
+  classId: z.string(),
+});
+
 type Kelas = z.infer<typeof kelasSchema>;
 
 export type { Kelas };
-export { kelasSchema, createKelasSchema, updateKelasSchema };
+export { kelasSchema, createKelasSchema, updateKelasSchema, joinClassSchema };

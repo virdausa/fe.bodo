@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   Kelas,
   createKelasSchema,
+  joinClassSchema,
   updateKelasSchema,
 } from "../schemas/kelas.schema";
 import { api } from "..";
@@ -46,4 +47,24 @@ async function deleteClass(id: number) {
   return response;
 }
 
-export { getClass, getAllClass, createClass, updateClass, deleteClass };
+async function joinClass(
+  data: z.infer<typeof joinClassSchema>,
+  studentId: number,
+) {
+  const response = await api.post<Kelas>(`classes/${data.classId}/join`, {
+    headers: {
+      "content-type": "application/json",
+    },
+    json: { studentId },
+  });
+  return response;
+}
+
+export {
+  getClass,
+  getAllClass,
+  createClass,
+  updateClass,
+  deleteClass,
+  joinClass,
+};

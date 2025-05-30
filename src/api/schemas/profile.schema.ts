@@ -2,6 +2,19 @@ import { z } from "zod";
 
 const fullNameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ]+([ '-][A-Za-zÀ-ÖØ-öø-ÿ]+)+$/;
 
+const professor = z.object({
+  id: z.number(),
+  number: z.string(),
+  major: z.string(),
+});
+
+const student = z.object({
+  id: z.number(),
+  number: z.string(),
+  major: z.string(),
+  class: z.string(),
+});
+
 const createProfileSchema = z.object({
   name: z
     .string({
@@ -16,7 +29,11 @@ const createProfileSchema = z.object({
 
 const updateProfileSchema = createProfileSchema.partial();
 
-const profileSchema = createProfileSchema.extend({ id: z.number() });
+const profileSchema = createProfileSchema.extend({
+  id: z.number(),
+  student: student.optional(),
+  professor: professor.optional(),
+});
 
 type Profile = z.infer<typeof profileSchema>;
 

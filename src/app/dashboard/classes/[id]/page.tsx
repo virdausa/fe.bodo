@@ -9,6 +9,7 @@ import {
   CalendarIcon,
   Clock,
   Copy,
+  Eye,
   NotebookText,
   PencilLine,
   Plus,
@@ -75,6 +76,8 @@ import {
   FileUploadTrigger,
 } from "@/components/ui/file-upload";
 import { uploadFile } from "@/api/services/upload.service";
+import { useUserStore } from "@/providers/user.provider";
+import Link from "next/link";
 
 function CreatePostModal() {
   const [open, setOpen] = useState<boolean>(false);
@@ -453,6 +456,7 @@ function CreateAssignmentModal() {
 
 function ClassPageDashboard() {
   const { kelas, updateKelas } = useKelasStore((state) => state);
+  const { profile } = useUserStore((state) => state);
   const params = useParams();
   const { id } = params;
 
@@ -507,15 +511,17 @@ function ClassPageDashboard() {
           </Card>
         </div>
         <div className="flex-1 space-y-2 md:space-y-4">
-          <Card>
-            <CardContent className="flex justify-end gap-2 md:gap-4">
-              <Button onClick={onCopyClassCode}>
-                Copy Class Code <Copy />
-              </Button>
-              <CreatePostModal />
-              <CreateAssignmentModal />
-            </CardContent>
-          </Card>
+          {profile.isProfessor && (
+            <Card>
+              <CardContent className="flex justify-end gap-2 md:gap-4">
+                <Button onClick={onCopyClassCode}>
+                  Copy Class Code <Copy />
+                </Button>
+                <CreatePostModal />
+                <CreateAssignmentModal />
+              </CardContent>
+            </Card>
+          )}
           <div className="space-y-2 md:space-y-4">
             {getKelasContent(kelas).map((content, idx) => {
               const formatted = content.date.toLocaleDateString("en-US", {
@@ -536,6 +542,14 @@ function ClassPageDashboard() {
                         <CardTitle>{content.title}</CardTitle>
                         <CardDescription>{content.description}</CardDescription>
                       </div>
+                      <div className="flex-1" />
+                      <Button asChild>
+                        <Link
+                          href={`/dashboard/classes/${kelas.id}/assignments/${content.id}`}
+                        >
+                          <Eye />
+                        </Link>
+                      </Button>
                     </CardHeader>
                     <CardFooter>
                       <div className="flex items-center gap-1">
@@ -556,6 +570,14 @@ function ClassPageDashboard() {
                         <CardTitle>{content.title}</CardTitle>
                         <CardDescription>{content.description}</CardDescription>
                       </div>
+                      <div className="flex-1" />
+                      <Button asChild>
+                        <Link
+                          href={`/dashboard/classes/${kelas.id}/posts/${content.id}`}
+                        >
+                          <Eye />
+                        </Link>
+                      </Button>
                     </CardHeader>
                     <CardFooter>
                       <div className="flex items-center gap-1">
