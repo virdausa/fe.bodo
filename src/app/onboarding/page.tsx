@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { profileSchema } from "@/api/schemas/profile.schema";
+import { createProfileSchema } from "@/api/schemas/profile.schema";
 import {
   Form,
   FormControl,
@@ -22,8 +22,8 @@ import { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function OnboardingPage() {
-  const form = useForm<z.infer<typeof profileSchema>>({
-    resolver: zodResolver(profileSchema),
+  const form = useForm<z.infer<typeof createProfileSchema>>({
+    resolver: zodResolver(createProfileSchema),
     defaultValues: {
       name: "",
       isProfessor: false,
@@ -48,7 +48,7 @@ export default function OnboardingPage() {
     initialOnboarding();
   }, [router]);
 
-  async function onSubmit(values: z.infer<typeof profileSchema>) {
+  async function onSubmit(values: z.infer<typeof createProfileSchema>) {
     try {
       const response = await createProfile(values);
       await response.json();

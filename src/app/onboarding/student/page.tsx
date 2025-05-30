@@ -16,21 +16,16 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { studentSchema } from "@/api/schemas/student.schema";
+import { createStudentSchema } from "@/api/schemas/student.schema";
 import { createStudent } from "@/api/services/student.service";
 
 export default function StudentOnboardingPage() {
-  const form = useForm<z.infer<typeof studentSchema>>({
-    resolver: zodResolver(studentSchema),
-    defaultValues: {
-      number: "",
-      major: "",
-      class: "",
-    },
+  const form = useForm<z.infer<typeof createStudentSchema>>({
+    resolver: zodResolver(createStudentSchema),
   });
   const router = useRouter();
 
-  async function onSubmit(values: z.infer<typeof studentSchema>) {
+  async function onSubmit(values: z.infer<typeof createStudentSchema>) {
     try {
       const response = await createStudent(values);
       await response.json();

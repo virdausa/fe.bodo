@@ -1,10 +1,15 @@
 import { z } from "zod";
 import {
   Kelas,
-  kelasSchema,
-  partialKelasSchema,
+  createKelasSchema,
+  updateKelasSchema,
 } from "../schemas/kelas.schema";
 import { api } from "..";
+
+async function getClass(id: number) {
+  const response = await api.get<Kelas>(`classes/${id}`);
+  return response;
+}
 
 async function getAllClass(as: string = "student") {
   const response = await api.get<Kelas[]>("classes", {
@@ -13,7 +18,7 @@ async function getAllClass(as: string = "student") {
   return response;
 }
 
-async function createClass(body: z.infer<typeof kelasSchema>) {
+async function createClass(body: z.infer<typeof createKelasSchema>) {
   const response = await api.post<Kelas>("classes", {
     headers: {
       "content-type": "application/json",
@@ -25,7 +30,7 @@ async function createClass(body: z.infer<typeof kelasSchema>) {
 
 async function updateClass(
   id: number,
-  body: z.infer<typeof partialKelasSchema>,
+  body: z.infer<typeof updateKelasSchema>,
 ) {
   const response = await api.patch<Kelas>(`classes/${id}`, {
     headers: {
@@ -41,4 +46,4 @@ async function deleteClass(id: number) {
   return response;
 }
 
-export { getAllClass, createClass, updateClass, deleteClass };
+export { getClass, getAllClass, createClass, updateClass, deleteClass };

@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { api } from "..";
-import { professorSchema } from "../schemas/professor.schema";
+import { Professor, createProfessorSchema } from "../schemas/professor.schema";
 
-type ProfessorResponse = z.infer<typeof professorSchema>;
-
-async function createProfessor(body: z.infer<typeof professorSchema>) {
-  const response = await api.post<ProfessorResponse>("professors", {
+async function createProfessor(body: z.infer<typeof createProfessorSchema>) {
+  const response = await api.post<Professor>("professors", {
     headers: {
       "content-type": "application/json",
     },
@@ -14,5 +12,4 @@ async function createProfessor(body: z.infer<typeof professorSchema>) {
   return response;
 }
 
-export type { ProfessorResponse };
 export { createProfessor };

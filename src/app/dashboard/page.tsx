@@ -10,8 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
   Kelas,
-  kelasSchema,
-  partialKelasSchema,
+  createKelasSchema,
+  updateKelasSchema,
 } from "@/api/schemas/kelas.schema";
 import {
   createClass,
@@ -67,12 +67,12 @@ interface CreateClassModalProps {
 function CreateClassModal({ setClasses }: CreateClassModalProps) {
   const [open, setOpen] = useState<boolean>(false);
 
-  const form = useForm<z.infer<typeof kelasSchema>>({
-    resolver: zodResolver(kelasSchema),
+  const form = useForm<z.infer<typeof createKelasSchema>>({
+    resolver: zodResolver(createKelasSchema),
     defaultValues: { name: "" },
   });
 
-  async function handleSubmit(values: z.output<typeof kelasSchema>) {
+  async function handleSubmit(values: z.output<typeof createKelasSchema>) {
     try {
       const response = await createClass(values);
       if (response.ok) {
@@ -146,12 +146,12 @@ interface UpdateClassModalProps {
 function UpdateClassModal({ kelas, setClasses }: UpdateClassModalProps) {
   const [open, setOpen] = useState<boolean>(false);
 
-  const form = useForm<z.infer<typeof partialKelasSchema>>({
-    resolver: zodResolver(partialKelasSchema),
+  const form = useForm<z.infer<typeof updateKelasSchema>>({
+    resolver: zodResolver(updateKelasSchema),
     defaultValues: { name: kelas.name },
   });
 
-  async function handleSubmit(values: z.output<typeof partialKelasSchema>) {
+  async function handleSubmit(values: z.output<typeof updateKelasSchema>) {
     try {
       const response = await updateClass(kelas.id, values);
       if (response.ok) {

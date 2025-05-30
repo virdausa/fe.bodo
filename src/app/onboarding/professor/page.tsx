@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { professorSchema } from "@/api/schemas/professor.schema";
+import { createProfessorSchema } from "@/api/schemas/professor.schema";
 import { createProfessor } from "@/api/services/professor.service";
 
 export default function ProfessorOnboardingPage() {
-  const form = useForm<z.infer<typeof professorSchema>>({
-    resolver: zodResolver(professorSchema),
+  const form = useForm<z.infer<typeof createProfessorSchema>>({
+    resolver: zodResolver(createProfessorSchema),
     defaultValues: {
       number: "",
       major: "",
@@ -29,7 +29,7 @@ export default function ProfessorOnboardingPage() {
   });
   const router = useRouter();
 
-  async function onSubmit(values: z.infer<typeof professorSchema>) {
+  async function onSubmit(values: z.infer<typeof createProfessorSchema>) {
     try {
       const response = await createProfessor(values);
       await response.json();
