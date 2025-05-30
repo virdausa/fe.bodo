@@ -87,34 +87,40 @@ function CreatePostModal() {
   });
 
   async function handleSubmit(values: z.output<typeof createPostSchema>) {
-    try {
-      const uploadedFiles: { url: string; name: string }[] = [];
-      for (const fl of files) {
-        const fileResponse = await uploadFile(fl);
-        const fileMetadata = await fileResponse.json();
-        uploadedFiles.concat({
-          name: fl.name,
-          url: fileMetadata.downloadPage,
-        });
-      }
+    async function handler() {
+      try {
+        const uploadedFiles: { url: string; name: string }[] = [];
+        for (const fl of files) {
+          const fileResponse = await uploadFile(fl);
+          const fileMetadata = await fileResponse.json();
+          uploadedFiles.concat({
+            name: fl.name,
+            url: fileMetadata.downloadPage,
+          });
+        }
 
-      const response = await createPost(kelas.id, {
-        ...values,
-        attachments: uploadedFiles,
-      });
-      if (response.ok) {
-        const post = postSchema.parse(await response.json());
-        updateKelas({ ...kelas, post: (kelas.post ?? []).concat(post) });
-        setOpen(false);
-        toast("Post has been added successfully");
-        form.reset();
-      } else {
-        throw new Error("Response not ok");
+        const response = await createPost(kelas.id, {
+          ...values,
+          attachments: uploadedFiles,
+        });
+        if (response.ok) {
+          const post = postSchema.parse(await response.json());
+          updateKelas({ ...kelas, post: (kelas.post ?? []).concat(post) });
+          setOpen(false);
+          form.reset();
+        } else {
+          throw new Error("Response not ok");
+        }
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      toast.error("There is an error while trying to create post");
-      console.log(error);
     }
+
+    toast.promise(handler, {
+      loading: "Creating post...",
+      success: `${values.title} has been posted`,
+      error: "There is an error while trying to create post",
+    });
   }
 
   return (
@@ -243,39 +249,45 @@ function CreateAssignmentModal() {
   });
 
   async function handleSubmit(values: z.output<typeof createAssignmentSchema>) {
-    try {
-      const uploadedFiles: { url: string; name: string }[] = [];
-      for (const fl of files) {
-        const fileResponse = await uploadFile(fl);
-        const fileMetadata = await fileResponse.json();
-        uploadedFiles.concat({
-          name: fl.name,
-          url: fileMetadata.downloadPage,
+    async function handler() {
+      try {
+        const uploadedFiles: { url: string; name: string }[] = [];
+        for (const fl of files) {
+          const fileResponse = await uploadFile(fl);
+          const fileMetadata = await fileResponse.json();
+          uploadedFiles.concat({
+            name: fl.name,
+            url: fileMetadata.downloadPage,
+          });
+        }
+
+        const response = await createAssignment(kelas.id, {
+          ...values,
+          attachments: uploadedFiles,
         });
+
+        if (response.ok) {
+          const assignment = assignmentSchema.parse(await response.json());
+
+          updateKelas({
+            ...kelas,
+            assignment: (kelas.assignment ?? []).concat(assignment),
+          });
+          setOpen(false);
+          form.reset();
+        } else {
+          throw new Error("Response not ok");
+        }
+      } catch (error) {
+        console.log(error);
       }
-
-      const response = await createAssignment(kelas.id, {
-        ...values,
-        attachments: uploadedFiles,
-      });
-
-      if (response.ok) {
-        const assignment = assignmentSchema.parse(await response.json());
-
-        updateKelas({
-          ...kelas,
-          assignment: (kelas.assignment ?? []).concat(assignment),
-        });
-        setOpen(false);
-        toast("Assignment has been added successfully");
-        form.reset();
-      } else {
-        throw new Error("Response not ok");
-      }
-    } catch (error) {
-      toast.error("There is an error while trying to create assignment");
-      console.log(error);
     }
+
+    toast.promise(handler, {
+      loading: "Creating assignment...",
+      success: `${values.title} has been posted`,
+      error: "There is an error while trying to create assignment",
+    });
   }
 
   return (
@@ -454,6 +466,11 @@ function ClassPageDashboard() {
     fetchClass();
   }, [id, updateKelas]);
 
+  function onCopyClassCode() {
+    navigator.clipboard.writeText(kelas.id.toString());
+    toast("Class code has been copied");
+  }
+
   return (
     <div className="flex flex-col gap-2 md:gap-4">
       <Card>
@@ -492,7 +509,7 @@ function ClassPageDashboard() {
         <div className="flex-1 space-y-2 md:space-y-4">
           <Card>
             <CardContent className="flex justify-end gap-2 md:gap-4">
-              <Button>
+              <Button onClick={onCopyClassCode}>
                 Copy Class Code <Copy />
               </Button>
               <CreatePostModal />
