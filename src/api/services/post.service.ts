@@ -6,6 +6,11 @@ import {
 } from "../schemas/post.schema";
 import { api } from "..";
 
+async function getPost(classId: number, postId: number) {
+  const response = await api.get<Post>(`classes/${classId}/posts/${postId}`);
+  return response;
+}
+
 async function createPost(
   classId: number,
   body: z.infer<typeof createPostSchema>,
@@ -40,4 +45,4 @@ async function deletePost(id: number, classId: number) {
   return response;
 }
 
-export { createPost, updatePost, deletePost };
+export { getPost, createPost, updatePost, deletePost };
