@@ -709,8 +709,6 @@ function UpdateAssignmentModal({ assignment }: UpdateAssignmentModalProps) {
           });
         }
 
-        console.log(uploadedFiles);
-
         const response = await updateAssignment(assignment.id, kelas.id, {
           ...values,
           attachments: uploadedFiles,
@@ -721,9 +719,7 @@ function UpdateAssignmentModal({ assignment }: UpdateAssignmentModalProps) {
             await response.json(),
           );
 
-          console.log(await response.json());
-          console.log(updateAssignment);
-
+          setOpen(false);
           updateKelas({
             ...kelas,
             assignment: kelas.assignment?.map((asg) => {
@@ -734,7 +730,6 @@ function UpdateAssignmentModal({ assignment }: UpdateAssignmentModalProps) {
               }
             }),
           });
-          setOpen(false);
           form.reset();
         } else {
           throw new Error("Response not ok");
