@@ -7,7 +7,6 @@ import {
   LucideProps,
   Home,
   ArrowLeft,
-  Book,
   Settings,
 } from "lucide-react";
 import {
@@ -56,14 +55,6 @@ interface IMainNav {
 }
 
 const items: IMainNav[] = [
-  {
-    title: "Class",
-    icon: Book,
-    items: [
-      { title: "Classes", url: "/dashboard/classes" },
-      { title: "Schedules", url: "/dashboard/schedules" },
-    ],
-  },
   {
     title: "Settings",
     icon: Settings,
