@@ -6,6 +6,13 @@ import {
 } from "../schemas/assignment.schema";
 import { api } from "..";
 
+async function getAssignment(classId: number, assignmentId: number) {
+  const response = await api.get<Assignment>(
+    `classes/${classId}/assignments/${assignmentId}`,
+  );
+  return response;
+}
+
 async function createAssignment(
   classId: number,
   body: z.infer<typeof createAssignmentSchema>,
@@ -48,4 +55,4 @@ async function deleteAssignment(id: number, classId: number) {
   return response;
 }
 
-export { createAssignment, updateAssignment, deleteAssignment };
+export { getAssignment, createAssignment, updateAssignment, deleteAssignment };
