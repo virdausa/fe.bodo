@@ -5,8 +5,20 @@ import { Kelas, kelasSchema } from "@/api/schemas/kelas.schema";
 import { submissionSchema } from "@/api/schemas/submission.schema";
 import { getAssignment } from "@/api/services/assignment.service";
 import { getClass } from "@/api/services/kelas.service";
+import { deleteQuestionnaire } from "@/api/services/questionnaire.service";
 import { createSubmission } from "@/api/services/submission.service";
 import { uploadFile } from "@/api/services/upload.service";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,17 +54,17 @@ export default function AssignmentPage() {
   const { id, assignmentId } = params;
 
   useEffect(() => {
-    async function fetchPost() {
+    async function fetchAssignment() {
       const response = await getAssignment(Number(id), Number(assignmentId));
-      const post = assignmentSchema.parse(await response.json());
-      setAssignment(post);
+      const assignment = assignmentSchema.parse(await response.json());
+      setAssignment(assignment);
 
       const kelasResponse = await getClass(Number(id));
       const kls = kelasSchema.parse(await kelasResponse.json());
       setKelas(kls);
     }
 
-    fetchPost();
+    fetchAssignment();
   }, [id, assignmentId]);
 
   async function handleSubmissionSubmit() {
@@ -86,6 +98,26 @@ export default function AssignmentPage() {
     });
   }
 
+  async function onDelete() {
+    async function handler() {
+      const response = await deleteQuestionnaire(
+        Number(id),
+        Number(assignmentId),
+        assignment?.questionnaire?.id ?? 0,
+      );
+
+      if (response.ok) {
+        setAssignment((asg) => ({ ...asg!, questionnaire: null }));
+      }
+    }
+
+    toast.promise(handler, {
+      loading: "Deleting questionnaire",
+      success: "Questionnaire has been deleted",
+      error: "There is an error while trying to delete questionnaire",
+    });
+  }
+
   return (
     <div className="flex flex-col gap-2 md:gap-4">
       <Link
@@ -96,27 +128,83 @@ export default function AssignmentPage() {
         <small className="text-sm">Return</small>
       </Link>
       <div className="flex gap-2 md:gap-4">
-        <Card className="h-fit flex-1">
-          <CardHeader>
-            <CardTitle>{assignment?.title}</CardTitle>
-            <CardDescription>{assignment?.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 md:gap-4">
-            <h3 className="font-bold">Attachments</h3>
-            {assignment?.attachments?.map((attachment, idx) => (
-              <Link
-                href={attachment.url}
-                key={`attachment-${attachment.name}-${idx}`}
-                target="_blank"
-              >
-                <div className="flex items-center gap-1 md:gap-2">
-                  <File className="size-4" />
-                  {attachment.name}
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="flex flex-1 flex-col gap-2 md:gap-4">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>{assignment?.title}</CardTitle>
+              <CardDescription>{assignment?.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 md:gap-4">
+              <h3 className="font-bold">Attachments</h3>
+              {assignment?.attachments?.map((attachment, idx) => (
+                <Link
+                  href={attachment.url}
+                  key={`attachment-${attachment.name}-${idx}`}
+                  target="_blank"
+                >
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <File className="size-4" />
+                    {attachment.name}
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex justify-end">
+              {profile.isProfessor ? (
+                assignment?.questionnaire !== null ? (
+                  <div className="flex gap-2 md:gap-4">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                          Delete Questionnaire
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you sure you want to delete this questionnaire?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove the questionnaire and
+                            all its questions.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete()}>
+                            Delete Questionnaire
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
+                    <Button disabled>Create Questionnaire</Button>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/dashboard/classes/${id}/assignments/${assignmentId}/questionnaires/create`}
+                  >
+                    <Button>Create Questionnaire</Button>
+                  </Link>
+                )
+              ) : assignment?.questionnaire === null ? (
+                <Button disabled>Open Questionnaire</Button>
+              ) : assignment?.questionnaire?.answers?.some(
+                  (ans) => ans.student?.id === profile.student?.id,
+                ) ? (
+                <Button disabled>Questionnaire has been submitted</Button>
+              ) : (
+                <Link
+                  href={`/dashboard/classes/${id}/assignments/${assignmentId}/questionnaires/${assignment?.questionnaire?.id}`}
+                >
+                  <Button>Open Questionnaire</Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        </div>
         {!profile.isProfessor && (
           <div className="flex flex-col gap-2 md:gap-4">
             <Card>
@@ -214,48 +302,92 @@ export default function AssignmentPage() {
           </div>
         )}
       </div>
+
       {profile.isProfessor && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Student&apos;s Submission</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {kelas?.student?.map((std, idx) => {
-              return (
-                <div
-                  key={`student-${std.profile?.name}-${idx}`}
-                  className="flex flex-col gap-1"
-                >
-                  <h3 className="font-bold">{std.profile?.name}</h3>
-                  {assignment?.submission?.some(
-                    (sub) => sub.student?.id === std.id,
-                  ) ? (
-                    <div className="flex flex-col gap-2 md:gap-4">
-                      {assignment?.submission
-                        ?.filter((sub) => sub.student?.id === std.id)
-                        .map((sub) =>
-                          sub.attachments?.map((attachment, idx) => (
-                            <Link
-                              href={attachment.url}
-                              key={`submission-attachment-${attachment.name}-${idx}`}
-                              target="_blank"
-                            >
-                              <div className="flex items-center gap-1 md:gap-2">
-                                <File className="size-4" />
-                                {attachment.name}
-                              </div>
-                            </Link>
-                          )),
-                        )}
-                    </div>
-                  ) : (
-                    `Currently no submission`
-                  )}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Student&apos;s Submission</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {kelas?.student?.map((std, idx) => {
+                return (
+                  <div
+                    key={`student-${std.profile?.name}-${idx}`}
+                    className="flex flex-col gap-1"
+                  >
+                    <h3 className="font-bold">{std.profile?.name}</h3>
+                    {assignment?.submission?.some(
+                      (sub) => sub.student?.id === std.id,
+                    ) ? (
+                      <div className="flex flex-col gap-2 md:gap-4">
+                        {assignment?.submission
+                          ?.filter((sub) => sub.student?.id === std.id)
+                          .map((sub) =>
+                            sub.attachments?.map((attachment, idx) => (
+                              <Link
+                                href={attachment.url}
+                                key={`submission-attachment-${attachment.name}-${idx}`}
+                                target="_blank"
+                              >
+                                <div className="flex items-center gap-1 md:gap-2">
+                                  <File className="size-4" />
+                                  {attachment.name}
+                                </div>
+                              </Link>
+                            )),
+                          )}
+                      </div>
+                    ) : (
+                      `Currently no submission`
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Student&apos;s Questionnaire Submission</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {kelas?.student?.map((std, idx) => {
+                return (
+                  <div
+                    key={`student-${std.profile?.name}-${idx}`}
+                    className="flex flex-col gap-1"
+                  >
+                    <h3 className="font-bold">{std.profile?.name}</h3>
+                    {assignment?.submission?.some(
+                      (sub) => sub.student?.id === std.id,
+                    ) ? (
+                      <div className="flex flex-col gap-2 md:gap-4">
+                        {assignment?.submission
+                          ?.filter((sub) => sub.student?.id === std.id)
+                          .map((sub) =>
+                            sub.attachments?.map((attachment, idx) => (
+                              <Link
+                                href={attachment.url}
+                                key={`submission-attachment-${attachment.name}-${idx}`}
+                                target="_blank"
+                              >
+                                <div className="flex items-center gap-1 md:gap-2">
+                                  <File className="size-4" />
+                                  {attachment.name}
+                                </div>
+                              </Link>
+                            )),
+                          )}
+                      </div>
+                    ) : (
+                      `Currently no submission`
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

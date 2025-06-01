@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { submissionSchema } from "./submission.schema";
+import { questionnaireSchema } from "./questionnaire.schema";
 
 const createAssignmentSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters long"),
@@ -16,6 +17,7 @@ const assignmentSchema = createAssignmentSchema.extend({
   id: z.number(),
   date: z.coerce.date(),
   submission: submissionSchema.array().optional(),
+  questionnaire: questionnaireSchema.optional().nullable(),
 });
 
 type Assignment = z.infer<typeof assignmentSchema>;
