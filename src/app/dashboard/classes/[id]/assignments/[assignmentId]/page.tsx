@@ -55,10 +55,12 @@ export default function AssignmentPage() {
 
   useEffect(() => {
     async function fetchAssignment() {
+      // Fetch the assignment (including questionnaire + existing answers)
       const response = await getAssignment(Number(id), Number(assignmentId));
-      const assignment = assignmentSchema.parse(await response.json());
-      setAssignment(assignment);
+      const assignmentData = assignmentSchema.parse(await response.json());
+      setAssignment(assignmentData);
 
+      // Fetch the class (to get list of students)
       const kelasResponse = await getClass(Number(id));
       const kls = kelasSchema.parse(await kelasResponse.json());
       setKelas(kls);
@@ -70,6 +72,7 @@ export default function AssignmentPage() {
   async function handleSubmissionSubmit() {
     async function handler() {
       const uploadedFiles: { url: string; name: string }[] = [];
+
       for (const sb of submission) {
         const fileResponse = await uploadFile(sb);
         const fileMetadata = await fileResponse.json();
@@ -84,13 +87,14 @@ export default function AssignmentPage() {
         Number(assignmentId),
         { attachments: uploadedFiles },
       );
-
       const createdSubmission = submissionSchema.parse(await response.json());
+
       setAssignment({
         ...assignment!,
         submission: (assignment?.submission ?? []).concat(createdSubmission),
       });
     }
+
     toast.promise(handler, {
       loading: "Submitting...",
       success: "Submission has been submitted",
@@ -118,6 +122,36 @@ export default function AssignmentPage() {
     });
   }
 
+  // Calculate score (0–100) for a given student’s answer object
+  function calculateScore(
+    studentAnswer:
+      | {
+          answers: { questionId: number; answer: number }[];
+        }
+      | undefined,
+  ) {
+    if (!assignment?.questionnaire || !studentAnswer) {
+      return 0;
+    }
+    const questions = assignment.questionnaire.questions;
+    let correctCount = 0;
+
+    for (const ans of studentAnswer.answers) {
+      // find the corresponding question object
+      const question = questions.find((q) => q.id === ans.questionId);
+      if (question && question.correct === ans.answer) {
+        correctCount += 1;
+      }
+    }
+
+    const totalQuestions = questions.length;
+    // Avoid division by zero
+    if (totalQuestions === 0) return 0;
+
+    // Score scaled to 0–100
+    return Math.round((correctCount / totalQuestions) * 100);
+  }
+
   return (
     <div className="flex flex-col gap-2 md:gap-4">
       <Link
@@ -127,6 +161,10 @@ export default function AssignmentPage() {
         <ArrowLeft className="size-4" />
         <small className="text-sm">Return</small>
       </Link>
+
+      {/* --------------------------------------------------------------------------------
+          Top area: Assignment details and, if professor, controls for creating/deleting questionnaire
+      ---------------------------------------------------------------------------------- */}
       <div className="flex gap-2 md:gap-4">
         <div className="flex flex-1 flex-col gap-2 md:gap-4">
           <Card className="h-fit">
@@ -150,9 +188,11 @@ export default function AssignmentPage() {
               ))}
             </CardContent>
           </Card>
+
           <Card>
             <CardContent className="flex justify-end">
               {profile.isProfessor ? (
+                // If professor, show delete/create questionnaire buttons
                 assignment?.questionnaire !== null ? (
                   <div className="flex gap-2 md:gap-4">
                     <AlertDialog>
@@ -205,6 +245,10 @@ export default function AssignmentPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* --------------------------------------------------------------------------------
+            If student: show submission upload + “Your Submission” list
+        ---------------------------------------------------------------------------------- */}
         {!profile.isProfessor && (
           <div className="flex flex-col gap-2 md:gap-4">
             <Card>
@@ -265,6 +309,7 @@ export default function AssignmentPage() {
                     ))}
                   </FileUploadList>
                 </FileUpload>
+
                 <Button
                   className="w-full"
                   onClick={handleSubmissionSubmit}
@@ -276,6 +321,7 @@ export default function AssignmentPage() {
                 </Button>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Your Submission</CardTitle>
@@ -303,8 +349,12 @@ export default function AssignmentPage() {
         )}
       </div>
 
+      {/* --------------------------------------------------------------------------------
+          If professor: show two cards—one for file submissions, another for questionnaire submissions
+      ---------------------------------------------------------------------------------- */}
       {profile.isProfessor && (
         <>
+          {/* ------------------------ Student’s Submission (unchanged) ------------------------ */}
           <Card>
             <CardHeader>
               <CardTitle>Student&apos;s Submission</CardTitle>
@@ -324,10 +374,10 @@ export default function AssignmentPage() {
                         {assignment?.submission
                           ?.filter((sub) => sub.student?.id === std.id)
                           .map((sub) =>
-                            sub.attachments?.map((attachment, idx) => (
+                            sub.attachments?.map((attachment, idx2) => (
                               <Link
                                 href={attachment.url}
-                                key={`submission-attachment-${attachment.name}-${idx}`}
+                                key={`submission-attachment-${attachment.name}-${idx2}`}
                                 target="_blank"
                               >
                                 <div className="flex items-center gap-1 md:gap-2">
@@ -339,48 +389,47 @@ export default function AssignmentPage() {
                           )}
                       </div>
                     ) : (
-                      `Currently no submission`
+                      <span>Currently no submission</span>
                     )}
                   </div>
                 );
               })}
             </CardContent>
           </Card>
+
+          {/* ------------- Student’s Questionnaire Submission (new score logic) ------------- */}
           <Card>
             <CardHeader>
               <CardTitle>Student&apos;s Questionnaire Submission</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {kelas?.student?.map((std, idx) => {
+                // Find this student's answer object (if any)
+                const studentAnswer = assignment?.questionnaire?.answers?.find(
+                  (ans) => ans.student?.id === std.id,
+                );
+
+                // Compute the score out of 100
+                const score = calculateScore(studentAnswer);
+
                 return (
                   <div
-                    key={`student-${std.profile?.name}-${idx}`}
+                    key={`qstudent-${std.profile?.name}-${idx}`}
                     className="flex flex-col gap-1"
                   >
                     <h3 className="font-bold">{std.profile?.name}</h3>
-                    {assignment?.submission?.some(
-                      (sub) => sub.student?.id === std.id,
-                    ) ? (
-                      <div className="flex flex-col gap-2 md:gap-4">
-                        {assignment?.submission
-                          ?.filter((sub) => sub.student?.id === std.id)
-                          .map((sub) =>
-                            sub.attachments?.map((attachment, idx) => (
-                              <Link
-                                href={attachment.url}
-                                key={`submission-attachment-${attachment.name}-${idx}`}
-                                target="_blank"
-                              >
-                                <div className="flex items-center gap-1 md:gap-2">
-                                  <File className="size-4" />
-                                  {attachment.name}
-                                </div>
-                              </Link>
-                            )),
-                          )}
+
+                    {studentAnswer ? (
+                      <div className="flex flex-col gap-1">
+                        <span>
+                          Score: <span className="font-semibold">{score}</span>
+                          /100
+                        </span>
+                        {/* Optionally, you could add a "View Details" link here
+                            to see exactly which questions they got right/wrong. */}
                       </div>
                     ) : (
-                      `Currently no submission`
+                      <span>Currently no questionnaire submission</span>
                     )}
                   </div>
                 );

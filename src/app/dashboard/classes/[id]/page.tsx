@@ -951,8 +951,8 @@ function ClassPageDashboard() {
               <div>
                 <h2 className="font-semibold">Students</h2>
                 <div className="space-y-1 md:space-y-2">
-                  {kelas?.student?.map((student) => (
-                    <div key={student.profile?.name}>
+                  {kelas?.student?.map((student, idx) => (
+                    <div key={`${student.profile?.name}-${idx}`}>
                       {student.profile?.name}
                     </div>
                   ))}
