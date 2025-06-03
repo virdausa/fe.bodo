@@ -80,7 +80,7 @@ export default function OnboardingPage() {
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Muhammad Dimas Prasetyo" {...field} />
+                  <Input placeholder="Diddy" {...field} />
                 </FormControl>
                 <FormDescription>This is your full name</FormDescription>
                 <FormMessage />

@@ -42,46 +42,55 @@ import { createQuestionnaire } from "@/api/services/questionnaire.service";
 import { toast } from "sonner";
 import Link from "next/link";
 
-const questionSchema = z.object({
-  id: z.number(),
-  question: z.string(),
-  options: z.array(z.string()),
-  correct: z.number(),
-});
+//
+// SCHEMAS AND TYPES
+//
 
+// Schema for adding a new question (no `id` field)
+const addQuestionSchema = z.object({
+  question: z.string(),
+  options: z.array(z.string()).length(4),
+  correct: z.number().min(0).max(3),
+});
+type AddQuestionValues = z.infer<typeof addQuestionSchema>;
+
+// Schema for a full Question (including `id`)
+const questionSchema = addQuestionSchema.extend({
+  id: z.number(),
+});
 type Question = z.infer<typeof questionSchema>;
 
+//
+// ADD QUESTION MODAL (only handles question, options, correct)
+//
 interface AddQuestionModalProps {
-  currentId: number;
-  addQuestion: (question: Question) => void;
+  addQuestion: (values: AddQuestionValues) => void;
 }
 
-function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
+function AddQuestionModal({ addQuestion }: AddQuestionModalProps) {
   const [open, setOpen] = useState<boolean>(false);
 
-  const form = useForm<Question>({
-    resolver: zodResolver(questionSchema),
+  const form = useForm<AddQuestionValues>({
+    resolver: zodResolver(addQuestionSchema),
     defaultValues: {
-      id: currentId,
       question: "",
       options: ["", "", "", ""],
       correct: 0,
     },
   });
 
-  const { setValue, getValues } = form;
+  const { watch, setValue } = form;
 
   function handleOptionChange(index: number, value: string) {
-    const options = [...getValues("options")];
-    options[index] = value;
-    setValue("options", options);
+    const opts = [...watch("options")];
+    opts[index] = value;
+    setValue("options", opts);
   }
 
-  function handleSubmit(values: z.infer<typeof questionSchema>) {
+  function onSubmit(values: AddQuestionValues) {
     addQuestion(values);
     setOpen(false);
     form.reset({
-      id: currentId + 1,
       question: "",
       options: ["", "", "", ""],
       correct: 0,
@@ -96,11 +105,14 @@ function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
       <DialogContent className="max-h-125 overflow-scroll md:max-h-150">
         <DialogHeader>
           <DialogTitle>Add Question</DialogTitle>
-          <DialogDescription>Add a question</DialogDescription>
+          <DialogDescription>
+            Add a new question to the questionnaire
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
+              {/* Question Text */}
               <FormField
                 control={form.control}
                 name="question"
@@ -110,23 +122,26 @@ function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
                     <FormControl>
                       <Textarea {...field} />
                     </FormControl>
-                    <FormDescription>This is the question</FormDescription>
+                    <FormDescription>
+                      Enter the question text here.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Options */}
               <div className="grid grid-cols-1 gap-4">
-                {form.watch("options").map((option, index) => (
-                  <FormItem key={index}>
-                    <FormLabel>{`Option ${index + 1}`}</FormLabel>
+                {watch("options").map((opt, idx) => (
+                  <FormItem key={idx}>
+                    <FormLabel>{`Option ${idx + 1}`}</FormLabel>
                     <FormControl>
                       <input
                         type="text"
                         className="w-full rounded border px-3 py-2"
-                        value={option}
+                        value={opt}
                         onChange={(e) =>
-                          handleOptionChange(index, e.target.value)
+                          handleOptionChange(idx, e.target.value)
                         }
                       />
                     </FormControl>
@@ -134,6 +149,7 @@ function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
                 ))}
               </div>
 
+              {/* Correct Answer */}
               <FormField
                 control={form.control}
                 name="correct"
@@ -146,16 +162,16 @@ function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
                         defaultValue={String(field.value)}
                         className="flex flex-col gap-2"
                       >
-                        {form.watch("options").map((option, index) => (
+                        {watch("options").map((opt, idx) => (
                           <FormItem
-                            key={index}
+                            key={idx}
                             className="flex items-center gap-3"
                           >
                             <FormControl>
-                              <RadioGroupItem value={String(index)} />
+                              <RadioGroupItem value={String(idx)} />
                             </FormControl>
                             <FormLabel className="font-normal">
-                              {option || `Option ${index + 1}`}
+                              {opt || `Option ${idx + 1}`}
                             </FormLabel>
                           </FormItem>
                         ))}
@@ -166,8 +182,9 @@ function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
                 )}
               />
 
+              {/* Submit Button */}
               <div className="flex justify-end gap-4">
-                <Button type="submit" className="w-fit hover:cursor-pointer">
+                <Button type="submit" className="w-fit">
                   Add Question
                 </Button>
               </div>
@@ -179,6 +196,9 @@ function AddQuestionModal({ currentId, addQuestion }: AddQuestionModalProps) {
   );
 }
 
+//
+// EDIT QUESTION MODAL (needs full Question including `id`)
+//
 interface EditQuestionModalProps {
   question: Question;
   updateQuestion: (updated: Question) => void;
@@ -195,15 +215,15 @@ function EditQuestionModal({
     defaultValues: { ...question },
   });
 
-  const { setValue, getValues } = form;
+  const { watch, setValue } = form;
 
   function handleOptionChange(index: number, value: string) {
-    const options = [...getValues("options")];
-    options[index] = value;
-    setValue("options", options);
+    const opts = [...watch("options")];
+    opts[index] = value;
+    setValue("options", opts);
   }
 
-  function handleSubmit(values: Question) {
+  function onSubmit(values: Question) {
     updateQuestion(values);
     setOpen(false);
   }
@@ -218,11 +238,12 @@ function EditQuestionModal({
       <DialogContent className="max-h-125 overflow-scroll md:max-h-150">
         <DialogHeader>
           <DialogTitle>Edit Question</DialogTitle>
-          <DialogDescription>Modify the question</DialogDescription>
+          <DialogDescription>Modify the selected question</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
+              {/* Question Text */}
               <FormField
                 control={form.control}
                 name="question"
@@ -232,23 +253,24 @@ function EditQuestionModal({
                     <FormControl>
                       <Textarea {...field} />
                     </FormControl>
-                    <FormDescription>Edit the question text</FormDescription>
+                    <FormDescription>Edit the question text.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Options */}
               <div className="grid grid-cols-1 gap-4">
-                {form.watch("options").map((option, index) => (
-                  <FormItem key={index}>
-                    <FormLabel>{`Option ${index + 1}`}</FormLabel>
+                {watch("options").map((opt, idx) => (
+                  <FormItem key={idx}>
+                    <FormLabel>{`Option ${idx + 1}`}</FormLabel>
                     <FormControl>
                       <input
                         type="text"
                         className="w-full rounded border px-3 py-2"
-                        value={option}
+                        value={opt}
                         onChange={(e) =>
-                          handleOptionChange(index, e.target.value)
+                          handleOptionChange(idx, e.target.value)
                         }
                       />
                     </FormControl>
@@ -256,6 +278,7 @@ function EditQuestionModal({
                 ))}
               </div>
 
+              {/* Correct Answer */}
               <FormField
                 control={form.control}
                 name="correct"
@@ -268,16 +291,16 @@ function EditQuestionModal({
                         defaultValue={String(field.value)}
                         className="flex flex-col gap-2"
                       >
-                        {form.watch("options").map((option, index) => (
+                        {watch("options").map((opt, idx) => (
                           <FormItem
-                            key={index}
+                            key={idx}
                             className="flex items-center gap-3"
                           >
                             <FormControl>
-                              <RadioGroupItem value={String(index)} />
+                              <RadioGroupItem value={String(idx)} />
                             </FormControl>
                             <FormLabel className="font-normal">
-                              {option || `Option ${index + 1}`}
+                              {opt || `Option ${idx + 1}`}
                             </FormLabel>
                           </FormItem>
                         ))}
@@ -288,8 +311,9 @@ function EditQuestionModal({
                 )}
               />
 
+              {/* Save Changes Button */}
               <div className="flex justify-end gap-4">
-                <Button type="submit" className="w-fit hover:cursor-pointer">
+                <Button type="submit" className="w-fit">
                   Save Changes
                 </Button>
               </div>
@@ -301,6 +325,9 @@ function EditQuestionModal({
   );
 }
 
+//
+// MAIN PAGE COMPONENT
+//
 export default function CreateQuestionnairePage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionId, setCurrentQuestionId] = useState<number>(1);
@@ -310,17 +337,25 @@ export default function CreateQuestionnairePage() {
 
   const router = useRouter();
 
-  function addQuestion(question: Question) {
-    setQuestions((q) => q.concat(question));
-    setCurrentQuestionId((id) => id++);
+  // Called by AddQuestionModal → receives question text/options/correct,
+  // then tacks on `id` here and increments the counter.
+  function addQuestion(vals: AddQuestionValues) {
+    const newQuestion: Question = {
+      id: currentQuestionId,
+      question: vals.question,
+      options: vals.options,
+      correct: vals.correct,
+    };
+    setQuestions((qs) => [...qs, newQuestion]);
+    setCurrentQuestionId((id) => id + 1);
   }
 
   function updateQuestion(updated: Question) {
     setQuestions((qs) => qs.map((q) => (q.id === updated.id ? updated : q)));
   }
 
-  function deleteQuestion(id: number) {
-    setQuestions((qs) => qs.filter((q) => q.id !== id));
+  function deleteQuestion(idToDelete: number) {
+    setQuestions((qs) => qs.filter((q) => q.id !== idToDelete));
   }
 
   async function onCreate() {
@@ -330,18 +365,18 @@ export default function CreateQuestionnairePage() {
         Number(assignmentId),
         { questions },
       );
-
       if (response.ok) {
         return router.push(
           `/dashboard/classes/${id}/assignments/${assignmentId}`,
         );
       }
+      throw new Error("Failed to create questionnaire");
     }
 
-    toast.promise(handler, {
+    toast.promise(handler(), {
       loading: "Creating questionnaire...",
       success: "Questionnaire has been created",
-      error: "There is an error while trying to create questionnaire",
+      error: "There was an error while creating the questionnaire",
     });
   }
 
@@ -354,15 +389,13 @@ export default function CreateQuestionnairePage() {
         <ArrowLeft className="size-4" />
         <small className="text-sm">Return</small>
       </Link>
+
       <Card>
         <CardHeader>
           <CardTitle>Create a questionnaire</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-end">
-          <AddQuestionModal
-            addQuestion={addQuestion}
-            currentId={currentQuestionId}
-          />
+          <AddQuestionModal addQuestion={addQuestion} />
         </CardContent>
       </Card>
 
@@ -408,17 +441,17 @@ export default function CreateQuestionnairePage() {
             </CardHeader>
 
             <CardContent className="space-y-2">
-              {q.options.map((option, index) => (
+              {q.options.map((opt, i) => (
                 <div
-                  key={index}
+                  key={i}
                   className={`flex items-center justify-between rounded border px-3 py-2 ${
-                    index === q.correct
+                    i === q.correct
                       ? "border-green-500 bg-green-50 text-green-800"
                       : "border-gray-300"
                   }`}
                 >
-                  <span>{option}</span>
-                  {index === q.correct && (
+                  <span>{opt}</span>
+                  {i === q.correct && (
                     <span className="text-sm font-medium text-green-600">
                       ✓ Correct
                     </span>
