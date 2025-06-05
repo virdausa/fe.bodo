@@ -337,8 +337,6 @@ export default function CreateQuestionnairePage() {
 
   const router = useRouter();
 
-  // Called by AddQuestionModal → receives question text/options/correct,
-  // then tacks on `id` here and increments the counter.
   function addQuestion(vals: AddQuestionValues) {
     const newQuestion: Question = {
       id: currentQuestionId,
