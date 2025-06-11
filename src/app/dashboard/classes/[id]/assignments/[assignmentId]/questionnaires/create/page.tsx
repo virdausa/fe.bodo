@@ -48,7 +48,10 @@ import Link from "next/link";
 
 // Schema for adding a new question (no `id` field)
 const addQuestionSchema = z.object({
-  question: z.string(),
+  question: z
+    .string()
+    .min(2, "Question must be at least 2 characters long")
+    .max(100, "Question must not exceed 100 characters long"),
   options: z.array(z.string()).length(4),
   correct: z.number().min(0).max(3),
 });

@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { signinSchema } from "@/api/schemas/auth.schema";
+import { PasswordInput } from "@/components/ui/password-input";
 
 function SigninForm() {
   const form = useForm<z.infer<typeof signinSchema>>({
@@ -74,7 +75,7 @@ function SigninForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <PasswordInput {...field} />
                 </FormControl>
                 <FormDescription>This is your password</FormDescription>
                 <FormMessage />

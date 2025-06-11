@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { signupSchema } from "@/api/schemas/auth.schema";
+import { PasswordInput } from "@/components/ui/password-input";
 
 function SignupForm() {
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -75,7 +76,7 @@ function SignupForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <PasswordInput {...field} />
                 </FormControl>
                 <FormDescription>This is your password</FormDescription>
                 <FormMessage />
@@ -89,7 +90,7 @@ function SignupForm() {
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Input type="password" {...field} />
+                  <PasswordInput {...field} />
                 </FormControl>
                 <FormDescription>
                   This is your password confirmation

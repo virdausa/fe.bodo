@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, LucideProps, Home, ArrowLeft, Bot } from "lucide-react";
+import {
+  ChevronRight,
+  LucideProps,
+  Home,
+  ArrowLeft,
+  Bot,
+  User,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -53,6 +60,11 @@ const items: IMainNav[] = [
     title: "Chatbot",
     icon: Bot,
     items: [{ title: "Chatbot", url: "/dashboard/chatbot" }],
+  },
+  {
+    title: "Profile",
+    icon: User,
+    items: [{ title: "Profile", url: "/dashboard/profile" }],
   },
 ];
 
