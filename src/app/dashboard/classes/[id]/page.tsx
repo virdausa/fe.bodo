@@ -17,6 +17,7 @@ import {
   Plus,
   Trash,
   Upload,
+  UserCheck,
   X,
 } from "lucide-react";
 import {
@@ -40,7 +41,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { KelasStoreProvider, useKelasStore } from "@/providers/kelas.provider";
 import { toast } from "sonner";
 import {
@@ -77,7 +77,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn, getKelasContent, isAssignment } from "@/lib/utils";
+import { cn, getKelasContent, isAssignment, isPresence } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { kelasSchema } from "@/api/schemas/kelas.schema";
@@ -106,6 +106,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  createPresenceSchema,
+  Presence,
+  presenceSchema,
+  updatePresenceSchema,
+} from "@/api/schemas/presence.schema";
+import {
+  attendPresence,
+  createPresence,
+  deletePresence,
+  updatePresence,
+} from "@/api/services/presence.service";
+import { DateTimePicker } from "@/components/ui/date-picker";
+import { Separator } from "@/components/ui/separator";
 
 function CreatePostModal() {
   const [open, setOpen] = useState<boolean>(false);
@@ -905,17 +919,199 @@ function UpdateAssignmentModal({ assignment }: UpdateAssignmentModalProps) {
   );
 }
 
+function CreatePresenceModal() {
+  const [open, setOpen] = useState<boolean>(false);
+  const { kelas, updateKelas } = useKelasStore((state) => state);
+
+  const form = useForm<z.infer<typeof createPresenceSchema>>({
+    resolver: zodResolver(createPresenceSchema),
+    defaultValues: {
+      deadline: new Date().toISOString(),
+    },
+  });
+
+  async function handleSubmit(values: z.output<typeof createPresenceSchema>) {
+    async function handler() {
+      try {
+        const response = await createPresence(kelas.id, values);
+        if (response.ok) {
+          const presence = presenceSchema.parse(await response.json());
+          updateKelas({
+            ...kelas,
+            presence: (kelas.presence ?? []).concat(presence),
+          });
+          // FIX: Reset with an ISO string as well
+          form.reset({ deadline: new Date().toISOString() });
+          setOpen(false);
+        } else {
+          throw new Error("Response not ok");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    toast.promise(handler, {
+      loading: "Creating presence session...",
+      success: "Presence session has been created.",
+      error: "There was an error while trying to create the presence session.",
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          Create Presence <Plus />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Presence Session</DialogTitle>
+          <DialogDescription>
+            Set a deadline for students to mark themselves as present.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="flex flex-col gap-6"
+          >
+            <FormField
+              control={form.control}
+              name="deadline"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Presence Deadline</FormLabel>
+                  <DateTimePicker
+                    date={field.value ? new Date(field.value) : undefined}
+                    setDate={(date) => field.onChange(date?.toISOString())}
+                    modal
+                  />
+                  <FormDescription>
+                    Students must attend before this time.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-4">
+              <Button type="submit" className="w-fit hover:cursor-pointer">
+                Create Presence
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface UpdatePresenceModalProps {
+  presence: Presence;
+}
+
+function UpdatePresenceModal({ presence }: UpdatePresenceModalProps) {
+  const [open, setOpen] = useState<boolean>(false);
+  const { kelas, updateKelas } = useKelasStore((state) => state);
+
+  const form = useForm<z.infer<typeof updatePresenceSchema>>({
+    resolver: zodResolver(updatePresenceSchema),
+    defaultValues: {
+      // FIX: presence.deadline is already an ISO string from the API, so this is correct.
+      deadline: presence.deadline,
+    },
+  });
+
+  async function handleSubmit(values: z.output<typeof updatePresenceSchema>) {
+    async function handler() {
+      try {
+        const response = await updatePresence(kelas.id, presence.id, values);
+
+        if (response.ok) {
+          const updatedPresence = presenceSchema.parse(await response.json());
+          updateKelas({
+            ...kelas,
+            presence: kelas.presence?.map((p) =>
+              p.id === presence.id ? updatedPresence : p,
+            ),
+          });
+          setOpen(false);
+        } else {
+          throw new Error("Response not ok");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    toast.promise(handler, {
+      loading: "Updating presence session...",
+      success: "Presence session has been updated.",
+      error: "There was an error while trying to update the session.",
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon">
+          <Pencil />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update Presence Session</DialogTitle>
+          <DialogDescription>
+            Change the deadline for this session.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="flex flex-col gap-6"
+          >
+            <FormField
+              control={form.control}
+              name="deadline"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>New Deadline</FormLabel>
+                  {/* FIX: Apply the same controller pattern here */}
+                  <DateTimePicker
+                    date={field.value ? new Date(field.value) : undefined}
+                    setDate={(date) => field.onChange(date?.toISOString())}
+                  />
+                  <FormDescription>
+                    Students must attend before this time.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-4">
+              <Button type="submit" className="w-fit hover:cursor-pointer">
+                Update Presence
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ClassPageDashboard() {
   const { kelas, updateKelas } = useKelasStore((state) => state);
-  const { profile } = useUserStore((state) => state);
+  const { profile } = useUserStore((state) => state); // --- MODIFIED --- get user for student check
   const params = useParams();
   const { id } = params;
 
   useEffect(() => {
     async function fetchClass() {
       const response = await getClass(Number(id));
-      const kelas = await response.json();
-      updateKelas(kelasSchema.parse(kelas));
+      const fetchedKelas = await response.json();
+      updateKelas(kelasSchema.parse(fetchedKelas));
     }
 
     fetchClass();
@@ -968,23 +1164,154 @@ function ClassPageDashboard() {
                 <Button onClick={onCopyClassCode}>
                   Copy Class Code <Copy />
                 </Button>
+                {/* --- NEW --- Add Create Presence Modal button */}
+                <CreatePresenceModal />
                 <CreatePostModal />
                 <CreateAssignmentModal />
               </CardContent>
             </Card>
           )}
           <div className="space-y-2 md:space-y-4">
+            {/* --- MODIFIED --- Use the updated content getter */}
             {getKelasContent(kelas).map((content, idx) => {
-              const formatted = content.date.toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+              // --- NEW --- Render Presence Card
+              if (isPresence(content)) {
+                const deadline = new Date(content.deadline);
+                const isDeadlinePassed = new Date() > deadline;
+                const hasAttended = content.student?.some(
+                  (attendee) => attendee.profile?.id === profile?.id,
+                );
+
+                async function handleAttend() {
+                  async function handler() {
+                    try {
+                      const response = await attendPresence(
+                        kelas.id,
+                        content.id,
+                      );
+                      if (response.ok) {
+                        const updatedPresence = await response.json();
+                        updateKelas({
+                          ...kelas,
+                          presence: kelas.presence?.map((p) =>
+                            p.id === content.id ? updatedPresence : p,
+                          ),
+                        });
+                      } else {
+                        throw new Error("Failed to attend");
+                      }
+                    } catch {
+                      // Re-throw to be caught by toast.promise
+                      throw new Error();
+                    }
+                  }
+
+                  toast.promise(handler, {
+                    loading: "Marking you as present...",
+                    success: "You are now marked as present!",
+                    error: (err) => err.message, // Display server error message
+                  });
+                }
+
+                async function handleDelete() {
+                  async function handler() {
+                    await deletePresence(kelas.id, content.id);
+                    updateKelas({
+                      ...kelas,
+                      presence: kelas.presence?.filter(
+                        (p) => p.id !== content.id,
+                      ),
+                    });
+                  }
+                  toast.promise(handler, {
+                    loading: "Deleting presence session...",
+                    success: "Presence session deleted.",
+                    error: "Failed to delete presence session.",
+                  });
+                }
+
+                return (
+                  <Card key={`presence-${content.id}-${idx}`}>
+                    <CardHeader className="flex flex-row items-center gap-2">
+                      <UserCheck className="size-5" />
+                      <div>
+                        <CardTitle>Presence Session</CardTitle>
+                        <CardDescription>
+                          Students must attend this session to be marked
+                          present.
+                        </CardDescription>
+                      </div>
+                      <div className="flex-1" />
+                      {profile.isProfessor ? (
+                        <>
+                          <UpdatePresenceModal presence={content} />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="icon" variant="destructive">
+                                <Trash />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete this presence session?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action is permanent. Student attendance
+                                  data for this session will be lost.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          <Button asChild>
+                            <Link
+                              href={`/dashboard/classes/${kelas.id}/presences/${content.id}`}
+                            >
+                              <Eye />
+                            </Link>
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          onClick={handleAttend}
+                          disabled={isDeadlinePassed || hasAttended}
+                        >
+                          {hasAttended
+                            ? "Attended"
+                            : isDeadlinePassed
+                              ? "Deadline Passed"
+                              : "Attend"}
+                        </Button>
+                      )}
+                    </CardHeader>
+                    <CardFooter>
+                      <div className="flex items-center gap-1">
+                        <Hourglass className="text-muted-foreground ml-4 size-3" />
+                        <small className="text-muted-foreground text-xs">
+                          Deadline: {format(deadline, "PPP p")}
+                        </small>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                );
+              }
 
               if (isAssignment(content)) {
+                const formatted = content.date?.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
                 const deadline = content.deadline.toLocaleDateString("en-US", {
                   weekday: "long",
                   month: "long",
@@ -1089,6 +1416,15 @@ function ClassPageDashboard() {
                   </Card>
                 );
               } else {
+                const formatted = content.date?.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
                 async function handleDelete() {
                   async function handler() {
                     try {

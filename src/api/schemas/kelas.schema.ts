@@ -3,6 +3,7 @@ import { studentSchema } from "./student.schema";
 import { professorSchema } from "./professor.schema";
 import { postSchema } from "./post.schema";
 import { assignmentSchema } from "./assignment.schema";
+import { presenceSchema } from "./presence.schema";
 
 const createKelasSchema = z.object({
   name: z
@@ -18,6 +19,7 @@ const kelasSchema = createKelasSchema.extend({
   post: postSchema.array().optional(),
   assignment: assignmentSchema.array().optional(),
   student: studentSchema.array().optional(),
+  presence: presenceSchema.array().optional(),
   professor: professorSchema.optional(),
 });
 
