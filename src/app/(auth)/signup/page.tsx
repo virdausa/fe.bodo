@@ -27,7 +27,7 @@ function SignupForm() {
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
@@ -37,7 +37,7 @@ function SignupForm() {
   async function onSubmit(values: z.infer<typeof signupSchema>) {
     try {
       await signUp(values);
-      toast.success(`Welcome ${values.username}`);
+      toast.success(`Welcome ${values.email}`);
       router.push("/onboarding");
     } catch (error) {
       toast.error("There is an error while signing you in");
@@ -52,19 +52,19 @@ function SignupForm() {
           <div className="flex flex-col items-center text-center">
             <h1 className="text-2xl font-bold">Welcome</h1>
             <p className="text-muted-foreground text-balance">
-              Create a Cognito account
+              Create a Bodo2 account
             </p>
           </div>
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="265458741" {...field} />
+                  <Input placeholder="mariaozawa@gmail.com" {...field} />
                 </FormControl>
-                <FormDescription>This is your username</FormDescription>
+                <FormDescription>This is your email</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

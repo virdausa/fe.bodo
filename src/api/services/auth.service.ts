@@ -1,7 +1,36 @@
 import { api } from "@/api";
 
-interface ISignUpBody {
+// Define a type for the possible user statuses
+type UserStatus = "active" | "inactive" | "pending" | "banned";
+
+// Interface for the nested 'user' object
+interface UserProfile {
+  id: number;
   username: string;
+  name: string;
+  email: string;
+  email_verified_at: string;
+  birth_date: string;
+  left_date: string | null;
+  sex: "male" | "female" | null;
+  id_card_number: string | null;
+  address: string;
+  phone_number: string;
+  status: UserStatus;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  role_id: number;
+  player_id: number;
+}
+
+interface LoginResponse {
+  token: string;
+  user: UserProfile;
+}
+
+interface ISignUpBody {
+  email: string;
   password: string;
 }
 
@@ -21,17 +50,19 @@ async function signUp(body: ISignUpBody) {
 }
 
 interface ISignInBody {
-  username: string;
+  email: string;
   password: string;
 }
 
 async function signIn(body: ISignInBody) {
-  const response = await api.post("auth/signin", {
+  const response = await api.post<LoginResponse>("login", {
     headers: {
       "content-type": "application/json",
     },
     json: body,
   });
+
+  console.log(response);
 
   if (!response.ok) {
     throw new Error(response.statusText);
@@ -41,7 +72,7 @@ async function signIn(body: ISignInBody) {
 }
 
 async function signOut() {
-  const response = await api.delete("auth/signout");
+  const response = await api.post("logout");
   if (!response.ok) {
     throw new Error(response.statusText);
   }

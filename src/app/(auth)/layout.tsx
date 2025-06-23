@@ -7,8 +7,8 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const hasSession = cookieStore.get("loggedIn");
-  if (hasSession) {
+  const hasToken = cookieStore.get("token");
+  if (hasToken) {
     return redirect("/dashboard");
   }
 

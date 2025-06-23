@@ -17,7 +17,7 @@ function Header() {
   return (
     <header className="border-sidebar-accent bg-sidebar sticky top-0 z-49 flex items-center justify-between gap-2 border-b px-5 py-3">
       <SidebarTrigger />
-      <h1 className="text-xl font-semibold">Cognito</h1>
+      <h1 className="text-xl font-semibold">Bodo2</h1>
 
       <div className="flex-1" />
 

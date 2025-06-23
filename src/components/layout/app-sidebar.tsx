@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Bot,
   User,
+  Grid2x2,
 } from "lucide-react";
 import {
   Collapsible,
@@ -30,7 +31,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { signOut as signOutService } from "@/api/services/auth.service";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +62,11 @@ const items: IMainNav[] = [
     items: [{ title: "Chatbot", url: "/dashboard/chatbot" }],
   },
   {
+    title: "Inventory",
+    icon: Grid2x2,
+    items: [{ title: "Accounts", url: "/inventory/accounts" }, { title: "Items", url: "/inventory/items" }],
+  },
+  {
     title: "Profile",
     icon: User,
     items: [{ title: "Profile", url: "/dashboard/profile" }],
@@ -72,7 +77,8 @@ function AppSidebar() {
   const { user, profile } = useUserStore((state) => state);
 
   async function signOut() {
-    await signOutService();
+    
+    localStorage.removeItem("token");
     redirect("/signin");
   }
 
@@ -85,9 +91,7 @@ function AppSidebar() {
             <AvatarFallback className="size-14">JD</AvatarFallback>
           </Avatar>
           <span className="font-semibold">{profile.name}</span>
-          <span className="text-muted-foreground text-xs">
-            @{user.username}
-          </span>
+          <span className="text-muted-foreground text-xs">@{user.email}</span>
         </div>
       </SidebarHeader>
       <Separator />

@@ -12,12 +12,12 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   // Basic
   title: {
-    default: "Cognito",
-    template: "%s | Cognito",
+    default: "Bodo2",
+    template: "%s | Bodo2",
   },
-  description: "Cognito adalah aplikasi kelas berbasis NextJS dan ExpressJS",
+  description: "Bodo2 adalah aplikasi kelas berbasis NextJS dan ExpressJS",
 
-  keywords: ["Cognito", "Aplikasi Kelas"],
+  keywords: ["Bodo2", "Aplikasi Kelas"],
 
   authors: [{ name: "LinCie", url: "https://lincie.me" }],
   creator: "LinCie",
@@ -56,10 +56,10 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "Cognito | Home",
-    description: "Cognito adalah aplikasi kelas berbasis NextJS dan ExpressJS",
+    title: "Bodo2 | Home",
+    description: "Bodo2 adalah aplikasi kelas berbasis NextJS dan ExpressJS",
     url: "https://cognito.my.id/",
-    siteName: "Cognito",
+    siteName: "Bodo2",
     locale: "en_US",
     type: "website",
     images: [
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
         url: "https://cognito.my.id/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cognito",
+        alt: "Bodo2",
       },
     ],
   },
@@ -77,8 +77,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@Ke_Lin_Cie",
     creator: "@Ke_Lin_Cie",
-    title: "Cognito | Home",
-    description: "Cognito adalah aplikasi kelas berbasis NextJS dan ExpressJS",
+    title: "Bodo2 | Home",
+    description: "Bodo2 adalah aplikasi kelas berbasis NextJS dan ExpressJS",
     images: ["https://cognito.my.id/twitter-card.png"],
   },
 };

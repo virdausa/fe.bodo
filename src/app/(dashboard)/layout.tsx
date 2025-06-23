@@ -14,8 +14,8 @@ export default async function DashboardLayout({
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
-  const hasSession = cookieStore.get("loggedIn");
-  if (!hasSession) {
+  const hasToken = cookieStore.get("token");
+  if (!hasToken) {
     return redirect("/signin");
   }
 
@@ -28,7 +28,7 @@ export default async function DashboardLayout({
           <Header />
           <main className="p-4 md:p-6 lg:p-8">{children}</main>
           <footer className="text-muted-foreground pb-10 text-center text-xs">
-            © 2025 Cognito™. All Rights Reserved
+            © 2025 Bodo2™. All Rights Reserved
           </footer>
         </div>
       </UserStoreProvider>

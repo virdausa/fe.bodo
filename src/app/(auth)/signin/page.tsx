@@ -22,12 +22,13 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { signinSchema } from "@/api/schemas/auth.schema";
 import { PasswordInput } from "@/components/ui/password-input";
+import { setCookie } from "cookies-next/client";
 
 function SigninForm() {
   const form = useForm<z.infer<typeof signinSchema>>({
     resolver: zodResolver(signinSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -35,8 +36,10 @@ function SigninForm() {
 
   async function onSubmit(values: z.infer<typeof signinSchema>) {
     try {
-      await signIn(values);
-      toast.success(`Welcome ${values.username}`);
+      const response = await signIn(values);
+      const user = await response.json();
+      setCookie("token", user.token);
+      toast.success(`Welcome ${values.email}`);
       router.push("/dashboard");
     } catch (error) {
       toast.error("There is an error while signing you in");
@@ -51,19 +54,19 @@ function SigninForm() {
           <div className="flex flex-col items-center text-center">
             <h1 className="text-2xl font-bold">Welcome back</h1>
             <p className="text-muted-foreground text-balance">
-              Login to your Cognito account
+              Login to your Bodo2 account
             </p>
           </div>
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="265458741" {...field} />
+                  <Input placeholder="mariaozawa@gmail.com" {...field} />
                 </FormControl>
-                <FormDescription>This is your username</FormDescription>
+                <FormDescription>This is your email</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
