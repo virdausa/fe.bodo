@@ -1,4 +1,8 @@
 import { api } from "@/api";
+import { toast } from "sonner";
+import { setCookie, deleteCookie } from "cookies-next";
+import { Router } from "lucide-react";
+import { redirect } from "next/navigation";
 
 // Define a type for the possible user statuses
 type UserStatus = "active" | "inactive" | "pending" | "banned";
@@ -72,12 +76,18 @@ async function signIn(body: ISignInBody) {
 }
 
 async function signOut() {
-  const response = await api.post("logout");
-  if (!response.ok) {
-    throw new Error(response.statusText);
+  try {
+    const response = await api.post("logout");
+    toast.success("You have been signed out");
+    return response;
+  } catch (error) {
+    console.log(error);
+    toast.error("There is an error while signing you out: ", error.message); 
+    throw error;  
+  } finally {
+    deleteCookie("token");
+    return redirect("/signin");
   }
-
-  return response;
 }
 
 export { signUp, signIn, signOut };
