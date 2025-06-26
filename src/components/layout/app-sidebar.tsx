@@ -68,6 +68,11 @@ const items: IMainNav[] = [
     items: [{ title: "Accounts", url: "/inventory/accounts" }, { title: "Items", url: "/inventory/items" }],
   },
   {
+    title: "Akses",
+    icon: ArrowLeft,
+    items: [{ title: "Kode", url: "/access/variables" }],
+  },
+  {
     title: "Profile",
     icon: User,
     items: [{ title: "Profile", url: "/dashboard/profile" }],
