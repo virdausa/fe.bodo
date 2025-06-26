@@ -1,9 +1,8 @@
 import ky from "ky";
 import { getCookie } from "cookies-next";
 
-const getToken = () => {
-  return getCookie("authToken");
-};
+const getToken = () => getCookie("token") as string | null;
+const getSpaceId = () => getCookie("space_id") as string | null;
 
 const api = ky.create({
   prefixUrl: "/api",
@@ -11,10 +10,19 @@ const api = ky.create({
     beforeRequest: [
       (request) => {
         const token = getToken();
+        const spaceId = getSpaceId();
 
+        // Set Authorization header
         if (token) {
           request.headers.set("Authorization", `Bearer ${token}`);
         }
+
+        // Add space_id query param if not present
+        if (spaceId && !request.url.includes("space_id=")) {
+          request.headers.set("X-Space-Id", spaceId);
+        }
+
+        console.log("spaceId", spaceId);
       },
     ],
   },

@@ -5,6 +5,8 @@ import "./globals.css";
 import '@ant-design/v5-patch-for-react-19';
 import { ThemeProvider } from "next-themes";
 
+import { SpaceProvider } from "@/providers/space.provider";
+
 const roboto = Roboto({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -97,8 +99,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <SpaceProvider>
+            {children}
+            <Toaster />
+          </SpaceProvider>
         </ThemeProvider>
       </body>
     </html>

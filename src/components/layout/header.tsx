@@ -6,6 +6,8 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "../ui/sidebar";
 
+import { SpaceSelector } from "@/components/initializer/space-selector";
+
 function Header() {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -13,6 +15,7 @@ function Header() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
 
   return (
     <header className="border-sidebar-accent bg-sidebar sticky top-0 z-49 flex items-center justify-between gap-2 border-b px-5 py-3">
@@ -22,6 +25,10 @@ function Header() {
       <div className="flex-1" />
 
       <div className="flex items-center gap-4">
+        {mounted && (
+          <SpaceSelector />
+        )}
+
         {mounted && (
           <Button
             variant="ghost"
