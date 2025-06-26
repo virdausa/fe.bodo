@@ -10,7 +10,7 @@ import { User } from "../schemas/auth.schema";
 type ProfileWithUserResponse = { profile: Profile; user: User };
 
 async function getMe() {
-  const response = await api.get<ProfileWithUserResponse>("profiles/me");
+  const response = await api.get<ProfileWithUserResponse>("user");
   return response;
 }
 

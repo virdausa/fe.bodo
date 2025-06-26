@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import '@ant-design/v5-patch-for-react-19';
 import { ThemeProvider } from "next-themes";
 
 const roboto = Roboto({
@@ -17,16 +18,13 @@ export const metadata: Metadata = {
   },
   description: "Bodo2 adalah aplikasi kelas berbasis NextJS dan ExpressJS",
 
-  keywords: ["Bodo2", "Aplikasi Kelas"],
+  keywords: ["Bodo2", "Aplikasi Keuangan"],
 
   authors: [{ name: "LinCie", url: "https://lincie.me" }],
   creator: "LinCie",
   publisher: "LinCie",
 
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
     other: [
       {
         rel: "android-chrome",
@@ -41,7 +39,7 @@ export const metadata: Metadata = {
     ],
   },
 
-  manifest: "/site.webmanifest",
+  // manifest: "/site.webmanifest",
 
   robots: {
     index: true,

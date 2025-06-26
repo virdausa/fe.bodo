@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://bodo.nerpai.space/api/:path*", // Proxy to Backend
+        destination: "https://api.nerpai.space/api/:path*", // Proxy to Backend
       },
     ];
   },
