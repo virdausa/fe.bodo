@@ -1,7 +1,6 @@
 import { api } from "@/api";
 import { toast } from "sonner";
-import { setCookie, deleteCookie } from "cookies-next";
-import { Router } from "lucide-react";
+import { deleteCookie } from "cookies-next";
 import { redirect } from "next/navigation";
 
 // Define a type for the possible user statuses
@@ -39,7 +38,7 @@ interface ISignUpBody {
 }
 
 async function signUp(body: ISignUpBody) {
-  const response = await api.post("auth/signup", {
+  const response = await api.post("auth/register", {
     headers: {
       "content-type": "application/json",
     },
@@ -59,7 +58,7 @@ interface ISignInBody {
 }
 
 async function signIn(body: ISignInBody) {
-  const response = await api.post<LoginResponse>("login", {
+  const response = await api.post<LoginResponse>("auth/login", {
     headers: {
       "content-type": "application/json",
     },
@@ -77,12 +76,12 @@ async function signIn(body: ISignInBody) {
 
 async function signOut() {
   try {
-    const response = await api.post("logout");
+    const response = await api.post("auth/logout");
     toast.success("You have been signed out");
     return response;
   } catch (error) {
     console.log(error);
-    toast.error("There is an error while signing you out: ", error.message); 
+    toast.error("There is an error while signing you out: "); 
     throw error;  
   } finally {
     deleteCookie("token");

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   ChevronRight,
   LucideProps,
@@ -42,7 +41,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useUserStore } from "@/providers/user.provider";
 import { signOut } from "@/api/services/auth.service";
 
 interface INavItem {
@@ -63,7 +61,12 @@ const items: IMainNav[] = [
     items: [{ title: "Chatbot", url: "/dashboard/chatbot" }],
   },
   {
-    title: "Inventory",
+    title: "Lahan",
+    icon: Grid2x2,
+    items: [{ title: "Lahan", url: "/space/spaces" }],
+  },
+  {
+    title: "Penyimpanan",
     icon: Grid2x2,
     items: [{ title: "Accounts", url: "/inventory/accounts" }, { title: "Items", url: "/inventory/items" }],
   },
@@ -80,8 +83,6 @@ const items: IMainNav[] = [
 ];
 
 function AppSidebar() {
-  const { user, profile } = useUserStore((state) => state);
-
   return (
     <Sidebar>
       <SidebarHeader>

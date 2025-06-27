@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import { useSpace } from "@/providers/space.provider";
 import { api } from "@/api";
 
-const { Option } = Select;
-
 
 interface Space {
   id: string;
@@ -25,7 +23,7 @@ const SpaceSelector = () => {
   const {spaceId, setSpaceId } = useSpace();
 
   interface ApiResponse {
-    data: any;
+    data: Space[];
     success: boolean;
     message: string;
   }

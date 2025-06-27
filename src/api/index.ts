@@ -15,6 +15,7 @@ const api = ky.create({
         // Set Authorization header
         if (token) {
           request.headers.set("Authorization", `Bearer ${token}`);
+          console.log("token", token);
         }
 
         // Add space_id query param if not present

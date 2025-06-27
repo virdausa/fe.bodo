@@ -15,23 +15,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-interface AccountType {
-  id: number | string;
-  name: string;
-}
 
-interface Account {
+interface Space {
   id: number | string;
   code: string;
   name: string;
   notes?: string;
-  type_id: number | string;
-  type: AccountType;
+  address?: string;
+  parent: Space;
+  parent_type?: string;
   parent_id?: number | string;
 }
 
 interface ApiDataTable {
-  data: Account[];
+  data: Space[];
   recordsFiltered: number;
 }
 
@@ -42,35 +39,28 @@ interface ApiResponse {
 }
 
 
-interface ApiResponseType {
-  data: AccountType[];
-}
 
-const AccountsPage: NextPage = () => {
-  const [data, setData] = useState<Account[]>([]);
+const SpacesPage: NextPage = () => {
+  const [data, setData] = useState<Space[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [total, setTotal] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
   const [form] = Form.useForm();
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
-  const [parentAccounts, setParentAccounts] = useState<Account[]>([]);
+  const [parentSpaces, setParentSpaces] = useState<Space[]>([]);
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
-  const columns: TableProps<Account>["columns"] = [
+  const columns: TableProps<Space>["columns"] = [
     { title: "Kode", dataIndex: "code", key: "code" },
-    { title: "Nama Akun", dataIndex: "name", key: "name" },
-    {
-      title: "Tipe",
-      dataIndex: ["type", "name"],
-      key: "type.name",
-    },
+    { title: "Parent", dataIndex: "parent.name", key: "parent.name" },
+    { title: "Nama Lahan", dataIndex: "name", key: "name" },
+    { title: "Lokasi", dataIndex: "address", key: "address" },
     { title: "Notes", dataIndex: "notes", key: "notes" },
   ];
 
@@ -80,7 +70,7 @@ const AccountsPage: NextPage = () => {
   ): Promise<void> => {
     setLoading(true);
     try {
-      const res = await api.get("accounts/data", {
+      const res = await api.get("spaces/data", {
         searchParams: {
           draw: 1,
           start: (currentPage - 1) * currentPageSize,
@@ -94,7 +84,7 @@ const AccountsPage: NextPage = () => {
       setTotal(json.recordsFiltered);
     } catch (err) {
       console.error("Failed to fetch account data:", err);
-      toast.error("Gagal mengambil data akun");
+      toast.error("Gagal mengambil data lahan");
     } finally {
       setLoading(false);
     }
@@ -102,7 +92,7 @@ const AccountsPage: NextPage = () => {
 
   useEffect(() => {
     fetchData(page, pageSize);
-    fetchDropdowns();
+    // fetchDropdowns();
   }, [page, pageSize]);
 
   const handlePaginationChange = (newPage: number, newPageSize: number) => {
@@ -110,26 +100,12 @@ const AccountsPage: NextPage = () => {
     setPageSize(newPageSize);
   };
 
-  const fetchDropdowns = async () => {
-    try {
-      const typesRes = await api.get("accounts/types/data");
-
-      const typesJson: ApiResponseType = await typesRes.json();
-
-      console.log("typesJson:", typesJson);
-
-      setAccountTypes(typesJson.data || []);
-    } catch (err) {
-      console.error("Gagal ambil data dropdown:", err);
-    }
-  };
-
   const handleSearchParent = async (value: string) => {
     if (!value) return;
 
     setSearchLoading(true);
     try {
-      const res = await api.get("accounts/search", {
+      const res = await api.get("spaces/search", {
         searchParams: {
           space_id: 1,
           q: value,
@@ -138,7 +114,7 @@ const AccountsPage: NextPage = () => {
 
       const json: ApiDataTable = await res.json();
 
-      setParentAccounts(json.data || []);
+      setParentSpaces(json.data || []);
     } catch (err) {
       console.error("Gagal ambil data dropdown:", err);
     } finally {
@@ -147,22 +123,22 @@ const AccountsPage: NextPage = () => {
   };
 
   // modal
-  const handleAddNewAccount = () => {
+  const handleAddNewSpace = () => {
     form.resetFields();
-    setSelectedAccount(null); // beda dengan edit
+    setSelectedSpace(null); // beda dengan edit
     setIsModalOpen(true);
-    setParentAccounts([]); // kosongkan dulu
+    setParentSpaces([]); // kosongkan dulu
   };
 
-  const handleRowClick = async (record: Account) => {
-    setSelectedAccount(record);
+  const handleRowClick = async (record: Space) => {
+    setSelectedSpace(record);
     form.setFieldsValue(record);
     setIsModalOpen(true);
 
     if (record.parent_id) {
-      const res = await api.get(`accounts/${record.parent_id}`);
+      const res = await api.get(`spaces/${record.parent_id}`);
       const parent: ApiDataTable = await res.json();
-      setParentAccounts(parent.data || []);
+      setParentSpaces(parent.data || []);
 
       console.log("parent:", parent);
     }
@@ -170,7 +146,7 @@ const AccountsPage: NextPage = () => {
 
   const handleModalCancel = () => {
     setIsModalOpen(false);
-    setSelectedAccount(null);
+    setSelectedSpace(null);
   };
 
   const handleModalOk = async () => {
@@ -186,12 +162,12 @@ const AccountsPage: NextPage = () => {
       values.space_id = 1;
 
       let res;
-      if (selectedAccount) {
-        res = await api.put(`accounts/${selectedAccount.id}`, {
+      if (selectedSpace) {
+        res = await api.put(`spaces/${selectedSpace.id}`, {
           json: values,
         });
       } else {
-        res = await api.post("accounts", {
+        res = await api.post("spaces", {
           json: values,
         });
       }
@@ -209,40 +185,40 @@ const AccountsPage: NextPage = () => {
 
     try {
       toast.promise(handler, {
-        loading: "Sedang menyimpan akun...",
-        success: (result) => result.toast || "Berhasil menyimpan akun",
+        loading: "Sedang menyimpan lahan...",
+        success: (result) => result.toast || "Berhasil menyimpan lahan",
       });
     } catch (err) {
-      console.error("Gagal menyimpan akun:", err);
+      console.error("Gagal menyimpan lahan:", err);
       if (err instanceof Error) {
-        toast.error(`Gagal menyimpan akun: ${err.message}`);
+        toast.error(`Gagal menyimpan lahan: ${err.message}`);
       }
     }
 
     setIsModalOpen(false);
-    setSelectedAccount(null);
+    setSelectedSpace(null);
   };
 
   // modal delete
   const handleDeleteMultiple = async () => {
     async function handler() {
       selectedRowKeys.map(
-        async (id) => await api.delete(`accounts/${id}?request_source=api`),
+        async (id) => await api.delete(`spaces/${id}?request_source=api`),
       );
     }
 
     try {
       toast.promise(handler, {
-        loading: "Sedang menghapus akun terpilih...",
+        loading: "Sedang menghapus lahan terpilih...",
         success: "Akun terpilih berhasil dihapus",
       });
       setSelectedRowKeys([]);
       setIsDeleteModalOpen(false);
       fetchData(page, pageSize);
     } catch (err) {
-      console.error("Gagal menghapus akun:", err);
+      console.error("Gagal menghapus lahan:", err);
       if (err instanceof Error) {
-        toast.error(`Gagal menghapus akun: ${err.message}`);
+        toast.error(`Gagal menghapus lahan: ${err.message}`);
       }
     }
   };
@@ -250,12 +226,12 @@ const AccountsPage: NextPage = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Daftar Akun</CardTitle>
-        <CardDescription>Berikut adalah daftar akun akun anda</CardDescription>
+        <CardTitle>Daftar Lahan</CardTitle>
+        <CardDescription>Berikut adalah daftar lahan-lahan anda</CardDescription>
       </CardHeader>
 
       <Flex gap="small" wrap justify="end" style={{ margin: 16 }}>
-        <Button type="primary" onClick={handleAddNewAccount}>
+        <Button type="primary" onClick={handleAddNewSpace}>
           + Tambah Akun
         </Button>
       </Flex>
@@ -307,7 +283,7 @@ const AccountsPage: NextPage = () => {
       </CardContent>
 
       <Modal
-        title={selectedAccount ? "Edit Akun" : "Tambah Akun"}
+        title={selectedSpace ? "Edit Akun" : "Tambah Akun"}
         open={isModalOpen}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
@@ -321,24 +297,11 @@ const AccountsPage: NextPage = () => {
           <Form.Item name="code" label="Kode Akun" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item
-            name="type_id"
-            label="Tipe Akun"
-            rules={[{ required: true }]}
-          >
-            <Select placeholder="Pilih tipe akun">
-              {accountTypes.map((type) => (
-                <Select.Option key={type.id} value={type.id}>
-                  {type.id}: {type.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
 
           <Form.Item name="parent_id" label="Akun Induk" required={false}>
             <Select
               showSearch
-              placeholder="Cari akun induk"
+              placeholder="Cari lahan induk"
               allowClear
               onSearch={handleSearchParent}
               filterOption={false}
@@ -347,7 +310,7 @@ const AccountsPage: NextPage = () => {
                 searchLoading ? <Spin size="small" /> : "Tidak ditemukan"
               }
             >
-              {parentAccounts.map((acc) => (
+              {parentSpaces.map((acc) => (
                 <Select.Option key={acc.id} value={acc.id}>
                   {acc.code} - {acc.name}
                 </Select.Option>
@@ -370,7 +333,7 @@ const AccountsPage: NextPage = () => {
         cancelText="Batal"
       >
         <p>
-          Apakah kamu yakin ingin menghapus {selectedRowKeys.length} akun ini?
+          Apakah kamu yakin ingin menghapus {selectedRowKeys.length} lahan ini?
           Tindakan ini tidak bisa dibatalkan.
         </p>
       </Modal>
@@ -378,4 +341,4 @@ const AccountsPage: NextPage = () => {
   );
 };
 
-export default AccountsPage;
+export default SpacesPage;
