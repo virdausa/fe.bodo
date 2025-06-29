@@ -5,7 +5,7 @@ import type { NextPage } from "next";
 import { Table, Pagination } from "antd";
 import { toast } from "sonner";
 import type { TableProps } from "antd";
-import { Modal, Form, Input, Button, Select, Spin, Flex } from "antd";
+import { Modal, Form, Input, Button, Flex } from "antd";
 import { api } from "@/api";
 import {
   Card,
@@ -50,8 +50,8 @@ const SpacesPage: NextPage = () => {
   const [form] = Form.useForm();
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [parentSpaces, setParentSpaces] = useState<Space[]>([]);
-  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+  // const [parentSpaces, setParentSpaces] = useState<Space[]>([]);
+  // const [searchLoading, setSearchLoading] = useState<boolean>(false);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
@@ -109,7 +109,7 @@ const SpacesPage: NextPage = () => {
     if (record.parent_id) {
       const res = await api.get(`spaces/${record.parent_id}`);
       const parent: ApiDataTable = await res.json();
-      setParentSpaces(parent.data || []);
+      // setParentSpaces(parent.data || []);
 
       console.log("parent:", parent);
     }
