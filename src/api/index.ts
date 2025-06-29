@@ -23,7 +23,7 @@ const api = ky.create({
           request.headers.set("X-Space-Id", spaceId);
         }
 
-        console.log("spaceId", spaceId);
+        console.log("url", request.url);
       },
     ],
   },
