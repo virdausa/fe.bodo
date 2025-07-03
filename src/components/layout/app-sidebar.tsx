@@ -43,6 +43,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { signOut } from "@/api/services/auth.service";
 
+import { useUserStore } from "@/providers/user.provider";
+
+
+
 interface INavItem {
   title: string;
   url: string;
@@ -56,9 +60,14 @@ interface IMainNav {
 
 const items: IMainNav[] = [
   {
-    title: "Chatbot",
-    icon: Bot,
-    items: [{ title: "Chatbot", url: "/dashboard/chatbot" }],
+    title: "Transaksi",
+    icon: Grid2x2,
+    items: [{ title: "Journal Umum", url: "/transaction/journal_accounts" }],
+  },
+  {
+    title: "Penyimpanan",
+    icon: Grid2x2,
+    items: [{ title: "Accounts", url: "/inventory/accounts" }],
   },
   {
     title: "Lahan",
@@ -66,14 +75,14 @@ const items: IMainNav[] = [
     items: [{ title: "Lahan", url: "/space/spaces" }],
   },
   {
-    title: "Penyimpanan",
-    icon: Grid2x2,
-    items: [{ title: "Accounts", url: "/inventory/accounts" }, { title: "Items", url: "/inventory/items" }],
-  },
-  {
     title: "Akses",
     icon: ArrowLeft,
     items: [{ title: "Kode", url: "/access/variables" }],
+  },
+  {
+    title: "Chatbot",
+    icon: Bot,
+    items: [{ title: "Chatbot", url: "/dashboard/chatbot" }],
   },
   {
     title: "Profile",
@@ -83,6 +92,10 @@ const items: IMainNav[] = [
 ];
 
 function AppSidebar() {
+  const { user } = useUserStore((state) => state);
+
+  console.log(user);
+
   return (
     <Sidebar>
       <SidebarHeader>

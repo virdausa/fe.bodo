@@ -21,6 +21,7 @@ const api = ky.create({
         // Add space_id query param if not present
         if (spaceId && !request.url.includes("space_id=")) {
           request.headers.set("X-Space-Id", spaceId);
+          console.log("space_id", spaceId);
         }
 
         console.log("url", request.url);
