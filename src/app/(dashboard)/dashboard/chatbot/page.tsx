@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/chat/chat-bubble";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { sendChat } from "@/api/services/ai.service";
-import { useUserStore } from "@/providers/user.provider";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { promptSchema } from "@/api/schemas/ai.schema";
@@ -28,13 +27,13 @@ interface Message {
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentId, setCurrentId] = useState<number>(1);
-  const { profile, isInitialized } = useUserStore((state) => state);
+
 
   const form = useForm<z.infer<typeof promptSchema>>({
     resolver: zodResolver(promptSchema),
     defaultValues: {
       prompt: "",
-      asProfessor: profile.isProfessor ?? false,
+      asProfessor: true,
       newChat: false,
     },
   });
@@ -87,7 +86,7 @@ export default function ChatbotPage() {
       const initial = {
         prompt: "Apakah ada tugas yang belum selesai?",
         newChat: true,
-        asProfessor: profile.isProfessor ?? false,
+        asProfessor: true,
       };
 
       const response = await sendChat(initial);
@@ -103,10 +102,8 @@ export default function ChatbotPage() {
       setCurrentId((id) => id++);
     }
 
-    if (isInitialized) {
-      fetchInitialMessage();
-    }
-  }, [profile.isProfessor, isInitialized]);
+    fetchInitialMessage();
+  }, []);
 
   return (
     <div className="space-y-16">

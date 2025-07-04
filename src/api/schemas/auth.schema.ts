@@ -37,6 +37,7 @@ const signupSchema = z
 type User = { 
   email: string;
   username: string;
+  name: string;
 };
 
 export type { User };

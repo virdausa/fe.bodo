@@ -75,10 +75,23 @@ const items: IMainNav[] = [
     items: [{ title: "Lahan", url: "/space/spaces" }],
   },
   {
-    title: "Akses",
-    icon: ArrowLeft,
-    items: [{ title: "Kode", url: "/access/variables" }],
+    title: "Pemain",
+    icon: Grid2x2,
+    items: [{ title: "Kontak", url: "/player/contacts" }],
   },
+  {
+    title: "Laporan",
+    icon: Grid2x2,
+    items: [
+      { title: "Neraca", url: "/inventory/accounts/summaries?summary_type=balance_sheet" },
+      { title: "Laba Rugi", url: "/inventory/accounts/summaries?summary_type=profit_loss" },
+    ],
+  },
+  // {
+  //   title: "Akses",
+  //   icon: ArrowLeft,
+  //   items: [{ title: "Kode", url: "/access/variables" }],
+  // },
   {
     title: "Chatbot",
     icon: Bot,
@@ -87,14 +100,12 @@ const items: IMainNav[] = [
   {
     title: "Profile",
     icon: User,
-    items: [{ title: "Profile", url: "/dashboard/profile" }],
+    items: [{ title: "Profile", url: "/user/profiles" }],
   },
 ];
 
 function AppSidebar() {
   const { user } = useUserStore((state) => state);
-
-  console.log(user);
 
   return (
     <Sidebar>
@@ -104,8 +115,8 @@ function AppSidebar() {
             <AvatarImage className="size-14" src="/svg/hehe.svg" />
             <AvatarFallback className="size-14">JD</AvatarFallback>
           </Avatar>
-          {/* <span className="font-semibold">{}</span> */}
-          <span className="text-muted-foreground text-xs">@{}</span>
+          <span className="font-semibold">{user.name}</span>
+          <span className="text-muted-foreground text-xs">as {user.email}</span>
         </div>
       </SidebarHeader>
       <Separator />
