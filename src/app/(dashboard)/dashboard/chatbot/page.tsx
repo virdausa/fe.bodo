@@ -62,6 +62,8 @@ export default function ChatbotPage() {
     const response = await sendChat({ prompt: values.prompt });
     const chat = await response.json();
 
+    console.log(chat);
+
     setMessages((msgs) =>
       msgs.map((msg) => {
         if (msg.id === botId) {
@@ -84,7 +86,7 @@ export default function ChatbotPage() {
       setMessages((msgs) => msgs.concat(message));
 
       const initial = {
-        prompt: "Apakah ada tugas yang belum selesai?",
+        prompt: "Apakah ada yang bisa saya bantu?",
         newChat: true,
         asProfessor: true,
       };
@@ -112,7 +114,7 @@ export default function ChatbotPage() {
           const variant = message.sender === "user" ? "sent" : "received";
           return (
             <ChatBubble key={`message-${index}`} variant={variant}>
-              <ChatBubbleAvatar fallback={variant === "sent" ? "US" : "JD"} />
+              <ChatBubbleAvatar fallback={variant === "sent" ? "ME" : "BD"} />
               <ChatBubbleMessage
                 isLoading={message.isLoading}
                 className={message.sender === "user" ? "bg-sky-400" : ""}
