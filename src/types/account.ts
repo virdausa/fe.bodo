@@ -11,6 +11,9 @@ interface Account {
   type_id: number | string;
   type: AccountType;
   parent_id?: number | string;
+  children?: Account[];
+  has_children?: boolean;
+  children_count?: number;
 }
 
 interface ApiDataTable {

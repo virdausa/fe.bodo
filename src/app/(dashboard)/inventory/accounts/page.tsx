@@ -28,9 +28,11 @@ const AccountsPage: NextPage = () => {
     refreshAccounts,
     search,
     setSearch,
+    setData, // Destructure setData from useAccountsData
   } = useAccountsData();
   const [form] = Form.useForm();
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
   const [parentAccounts, setParentAccounts] = useState<Account[]>([]);
@@ -99,7 +101,8 @@ const AccountsPage: NextPage = () => {
         {
           loading: "Sedang menyimpan akun...",
           success: (result) => {
-            refreshAccounts();
+            refreshAccounts(); // This refetches top-level data
+            setExpandedRowKeys([]); // Collapse all rows to ensure fresh data on re-expand
             setIsModalOpen(false);
             setSelectedAccount(null);
             return result.toast || "Berhasil menyimpan akun";
@@ -119,12 +122,50 @@ const AccountsPage: NextPage = () => {
       success: () => {
         setSelectedRowKeys([]);
         setIsDeleteModalOpen(false);
-        refreshAccounts();
+         refreshAccounts(); // This refetches top-level data
+         setExpandedRowKeys([]); // Collapse all rows
         return "Akun terpilih berhasil dihapus";
       },
       error: "Gagal menghapus akun.",
     });
   };
+
+  const handleExpand = async (expanded: boolean, record: Account) => {
+    if (expanded && record.id) {
+      // Check if children are already loaded or if it's marked as having no children
+      if (record.children && record.children.length > 0) {
+        // Children already loaded
+        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
+        return;
+      }
+      if (record.has_children === false || record.children_count === 0) {
+        // Explicitly marked as no children
+        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]); // Expand to show "no children" message if table handles it
+        return;
+      }
+
+      // Load children
+      // Add to expandedRowKeys immediately to show loading indicator in table if configured
+      setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
+      try {
+        const accountDetails = await accountService.getAccountDetails(record.id);
+        setData((currentData) =>
+          currentData.map((acc) =>
+            acc.id === record.id
+              ? { ...acc, children: accountDetails.children || [] } // Ensure children is at least an empty array
+              : acc,
+          ),
+        );
+      } catch (error) {
+        toast.error(`Gagal memuat detail akun untuk ${record.name}`);
+        // Remove from expandedRowKeys if loading failed, so it can be tried again
+        setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== record.id));
+      }
+    } else if (!expanded && record.id) {
+      setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== record.id));
+    }
+  };
+
 
   return (
     <Card>
@@ -150,8 +191,9 @@ const AccountsPage: NextPage = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onSearch={(value) => {
-            setSearch(value);
-            refreshAccounts();
+            setSearch(value); // This will trigger useEffect in useAccountsData to refetch
+            setExpandedRowKeys([]); // Collapse all rows on new search
+            // Data will be refreshed by the hook, which now includes setData
           }}
           style={{ width: "300px" }}
         />
@@ -176,6 +218,8 @@ const AccountsPage: NextPage = () => {
           selectedRowKeys={selectedRowKeys}
           onRowClick={handleRowClick}
           onSelectionChange={setSelectedRowKeys}
+          expandedRowKeys={expandedRowKeys}
+          onExpand={handleExpand}
         />
         <div className="flex justify-end">
           <Pagination

@@ -46,13 +46,30 @@ async function searchParentAccounts(query: string): Promise<ApiDataTable> {
 }
 
 /**
- * Fetches a single account by its ID, typically for populating the parent account field.
+ * Fetches a single account by its ID, typically for populating the parent account field
+ * or getting details including children.
  */
 async function getAccountById(
   id: number | string,
-): Promise<{ data: Account[] }> {
+): Promise<{ data: Account[] }> { // Backend returns { data: [account] }
   const response = await api.get(`accounts/${id}`);
   return response.json<{ data: Account[] }>();
+}
+
+/**
+ * Fetches the full details of a single account, primarily for lazy loading children.
+ * The backend's show($id) method returns { data: [accountWithChildren] }.
+ */
+async function getAccountDetails(
+  accountId: number | string,
+): Promise<Account> {
+  const response = await api.get(`accounts/${accountId}`);
+  // Assuming the backend returns { data: [account] } as per the show($id) method
+  const result = await response.json<{ data: Account[] }>();
+  if (result.data && result.data.length > 0) {
+    return result.data[0]; // Return the first account object which should include its children
+  }
+  throw new Error("Account not found or invalid response structure");
 }
 
 /**
@@ -93,6 +110,7 @@ export const accountService = {
   getAccountTypes,
   searchParentAccounts,
   getAccountById,
+  getAccountDetails,
   saveAccount,
   deleteAccounts,
 };
