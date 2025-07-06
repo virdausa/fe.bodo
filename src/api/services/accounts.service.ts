@@ -79,9 +79,23 @@ async function saveAccount(
   accountData: Partial<Account>,
   accountId: number | string | null,
 ): Promise<ApiResponse> {
-  const payload = { ...accountData, space_id: 1 };
-  if (!payload.parent_id) {
-    payload.parent_id = undefined;
+  const payload: Partial<Account> & { space_id?: number } = { ...accountData, space_id: 1 }; // Assuming space_id is always 1 for now
+
+  // Handle parent_id: if it's falsy (e.g., null, undefined, 0, ''), set it to null for the backend.
+  // If it has a value, ensure it's a number.
+  if (!payload.parent_id || String(payload.parent_id).trim() === "") {
+    payload.parent_id = null;
+  } else {
+    const numParentId = Number(payload.parent_id);
+    if (!isNaN(numParentId)) {
+      payload.parent_id = numParentId;
+    } else {
+      // Handle error: parent_id is not a valid number
+      // This case should ideally be caught by form validation earlier
+      console.error("Invalid parent_id:", payload.parent_id);
+      // Decide on behavior: throw error, or send null, or remove parent_id
+      payload.parent_id = null; // Or delete payload.parent_id;
+    }
   }
 
   const response = accountId

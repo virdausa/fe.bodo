@@ -142,40 +142,180 @@ const AccountsPage: NextPage = () => {
 
   const handleExpand = async (expanded: boolean, record: Account) => {
     if (expanded && record.id) {
-      // Check if children are already loaded or if it's marked as having no children
-      if (record.children && record.children.length > 0) {
-        // Children already loaded
-        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
-        return;
-      }
-      if (record.has_children === false || record.children_count === 0) {
-        // Explicitly marked as no children
-        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]); // Expand to show "no children" message if table handles it
-        return;
-      }
+      const needsLoading = !record.children &&
+                           (record.has_children === true || (typeof record.children_count === 'number' && record.children_count > 0));
 
-      // Load children
-      // Add to expandedRowKeys immediately to show loading indicator in table if configured
-      setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
-      try {
-        const accountDetails = await accountService.getAccountDetails(record.id);
+      if (needsLoading) {
+        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
+        try {
+          const accountDetails = await accountService.getAccountDetails(record.id);
+          setData((currentData) =>
+            currentData.map((acc) =>
+              acc.id === record.id
+                ? { ...acc, children: accountDetails.children || [] }
+                : acc,
+            ),
+          );
+        } catch (error) {
+          toast.error(`Gagal memuat sub-akun untuk ${record.name}`);
+          setData((currentData) =>
+            currentData.map((acc) =>
+              acc.id === record.id
+                ? { ...acc, children: [] } // Set children to empty array on error
+                : acc,
+            ),
+          );
+          setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== record.id));
+        }
+      } else if (record.children) {
+        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
+      } else if (record.has_children === false || (typeof record.children_count === 'number' && record.children_count === 0)) {
+        // No children to load, ensure children is [], so "No sub-accounts" message is shown by renderer
         setData((currentData) =>
-          currentData.map((acc) =>
-            acc.id === record.id
-              ? { ...acc, children: accountDetails.children || [] } // Ensure children is at least an empty array
-              : acc,
-          ),
+            currentData.map(acc => acc.id === record.id && !acc.children ? {...acc, children: []} : acc)
         );
-      } catch (error) {
-        toast.error(`Gagal memuat detail akun untuk ${record.name}`);
-        // Remove from expandedRowKeys if loading failed, so it can be tried again
-        setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== record.id));
+        setExpandedRowKeys((prevKeys) => [...prevKeys, record.id]);
       }
     } else if (!expanded && record.id) {
       setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== record.id));
     }
   };
 
+  const handleExpandSubRow = async (
+    expanded: boolean,
+    _parentInTree: Account, // Not strictly needed for global search update by ID
+    recordToExpand: Account,
+  ) => {
+    if (expanded && recordToExpand.id) {
+      const needsLoading = !recordToExpand.children &&
+                           (recordToExpand.has_children === true || (typeof recordToExpand.children_count === 'number' && recordToExpand.children_count > 0));
+
+      if (needsLoading) {
+        setExpandedRowKeys((prevKeys) => [...prevKeys, recordToExpand.id]);
+        try {
+          const details = await accountService.getAccountDetails(recordToExpand.id);
+
+          setData((currentData) => {
+            const updateRecursively = (nodes: Account[]): Account[] => {
+              return nodes.map(node => {
+                if (node.id === recordToExpand.id) {
+                  return { ...node, children: details.children || [] };
+                }
+                if (node.children) {
+                  const updatedNodeChildren = updateRecursively(node.children);
+                  if (updatedNodeChildren !== node.children) {
+                    return { ...node, children: updatedNodeChildren };
+                  }
+                }
+                return node;
+              });
+            };
+            return updateRecursively(currentData);
+          });
+
+        } catch (error) {
+          toast.error(`Gagal memuat sub-akun untuk ${recordToExpand.name}`);
+          setData(currentData => {
+              const setErrorChildrenRecursively = (nodes: Account[]): Account[] => {
+                return nodes.map(node => {
+                  if (node.id === recordToExpand.id) {
+                    return { ...node, children: [] };
+                  }
+                  if (node.children) {
+                    const updatedNodeChildren = setErrorChildrenRecursively(node.children);
+                    if (updatedNodeChildren !== node.children) {
+                        return { ...node, children: updatedNodeChildren };
+                    }
+                  }
+                  return node;
+                });
+              };
+              return setErrorChildrenRecursively(currentData);
+          });
+          setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== recordToExpand.id));
+        }
+      } else if (recordToExpand.children) {
+        setExpandedRowKeys((prevKeys) => [...prevKeys, recordToExpand.id]);
+      }
+      else if (recordToExpand.has_children === false || (typeof recordToExpand.children_count === 'number' && recordToExpand.children_count === 0)) {
+         setData((currentData) => {
+            const setEmptyChildrenRecursively = (nodes: Account[]): Account[] => {
+                return nodes.map(node => {
+                  if (node.id === recordToExpand.id && !node.children) {
+                    return { ...node, children: [] };
+                  }
+                  if (node.children) {
+                    const updatedNodeChildren = setEmptyChildrenRecursively(node.children);
+                    if (updatedNodeChildren !== node.children) {
+                        return { ...node, children: updatedNodeChildren };
+                    }
+                  }
+                  return node;
+                });
+              };
+            return setEmptyChildrenRecursively(currentData);
+         });
+         setExpandedRowKeys((prevKeys) => [...prevKeys, recordToExpand.id]);
+      }
+    } else if (!expanded && recordToExpand.id) {
+      setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== recordToExpand.id));
+    }
+  };
+
+  // const handleExpandGrandchild = async (
+  //   expanded: boolean,
+  //   parentOfChild: Account,
+  //   childToExpand: Account,
+  // ) => {
+  //   // This logic is now removed or deferred as AntD default rendering for children is used.
+  //   // If multi-level is needed beyond what AntD provides automatically, this needs to be revisited.
+  //   if (expanded && childToExpand.id) {
+  //     if (childToExpand.children && childToExpand.children.length > 0) {
+  //       setExpandedRowKeys((prevKeys) => [...prevKeys, childToExpand.id]);
+  //       return;
+  //     }
+  //     if (childToExpand.has_children === false || (typeof childToExpand.children_count === 'number' && childToExpand.children_count === 0)) {
+  //       setExpandedRowKeys((prevKeys) => [...prevKeys, childToExpand.id]);
+  //       setData(currentData => currentData.map(topLevelAccount => {
+  //           if (topLevelAccount.id === parentOfChild.id && topLevelAccount.children) {
+  //               return {
+  //                   ...topLevelAccount,
+  //                   children: topLevelAccount.children.map(child =>
+  //                       child.id === childToExpand.id ? { ...child, children: [] } : child
+  //                   ),
+  //               };
+  //           }
+  //           return topLevelAccount;
+  //       }));
+  //       return;
+  //     }
+
+  //     setExpandedRowKeys((prevKeys) => [...prevKeys, childToExpand.id]);
+  //     try {
+  //       const grandchildDetails = await accountService.getAccountDetails(childToExpand.id);
+  //       setData((currentData) =>
+  //         currentData.map((topLevelAccount) => {
+  //           if (topLevelAccount.id === parentOfChild.id && topLevelAccount.children) {
+  //             return {
+  //               ...topLevelAccount,
+  //               children: topLevelAccount.children.map((childL1) =>
+  //                 childL1.id === childToExpand.id
+  //                   ? { ...childL1, children: grandchildDetails.children || [] }
+  //                   : childL1,
+  //               ),
+  //             };
+  //           }
+  //           return topLevelAccount;
+  //         }),
+  //       );
+  //     } catch (error) {
+  //       toast.error(`Gagal memuat sub-akun untuk ${childToExpand.name}`);
+  //       setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== childToExpand.id));
+  //     }
+  //   } else if (!expanded && childToExpand.id) {
+  //     setExpandedRowKeys((prevKeys) => prevKeys.filter(key => key !== childToExpand.id));
+  //   }
+  // };
 
   return (
     <Card>
@@ -235,6 +375,7 @@ const AccountsPage: NextPage = () => {
           onSelectionChange={setSelectedRowKeys}
           expandedRowKeys={expandedRowKeys}
           onExpand={handleExpand}
+          onExpandSubRow={handleExpandSubRow}
         />
         <div className="flex justify-end">
           <Pagination

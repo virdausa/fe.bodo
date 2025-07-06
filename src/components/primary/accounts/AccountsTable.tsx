@@ -8,8 +8,9 @@ interface AccountsTableProps {
   selectedRowKeys: React.Key[];
   onRowClick: (record: Account) => void;
   onSelectionChange: (selectedKeys: React.Key[]) => void;
-  expandedRowKeys: React.Key[];
-  onExpand: (expanded: boolean, record: Account) => void;
+  expandedRowKeys: React.Key[]; // Will store IDs of all expanded rows across all levels
+  onExpand: (expanded: boolean, record: Account) => void; // For expanding top-level rows (Table's direct children)
+  onExpandSubRow: (expanded: boolean, parentAccount: Account, subAccountToExpand: Account) => void; // For expanding rows rendered manually (children, grandchildren, etc.)
 }
 
 const columns: TableProps<Account>["columns"] = [
@@ -38,64 +39,110 @@ export function AccountsTable({
   onSelectionChange,
   expandedRowKeys,
   onExpand,
+  onExpandSubRow, // Destructure the new prop
 }: AccountsTableProps) {
-  const expandedRowRender = (parentRecord: Account) => {
-    if (!parentRecord.children || parentRecord.children.length === 0) {
-      return <div style={{ padding: "12px", paddingLeft: "48px", backgroundColor: "#fafafa" }}>Tidak ada sub-akun.</div>;
-    }
 
-    // Manual rendering of child rows
-    // We'll try to mimic the main table's column widths approximately for alignment.
-    // These widths correspond to the `columns` definition for the main table.
-    // Kode: 150, Nama Akun: auto (ellipsis), Tipe: 200, Notes: auto (ellipsis), Saldo: 150
-    // For children, we might want to indent them slightly.
-    const cellPadding = "8px 12px"; // Consistent padding for cells
-    const childRowStyle: React.CSSProperties = {
+  const денегНет = typeof स्तंभों[1].width === 'number' ? स्तंभों[1].width : 150; // Kode
+  const nameWidth = null; // flexGrow
+  const typeWidth = typeof columns[3].width === 'number' ? columns[3].width : 200; // Tipe
+  const notesWidth = null; // flexGrow
+  const balanceWidth = typeof columns[5].width === 'number' ? columns[5].width : 150; // Saldo
+  const expandIconCellWidth = 40; // Width for the cell containing the expand icon for sub-rows
+  const baseIndent = 20; // Base indent for each level, applied to the row container
+
+  const renderAccountRow = (account: Account, level: number, parentOfThisAccount: Account | null) => {
+    const isExpanded = expandedRowKeys.includes(account.id);
+    const canExpand = Boolean(account.has_children) || (typeof account.children_count === 'number' && account.children_count > 0);
+
+    const rowStyle: React.CSSProperties = {
       display: "flex",
       borderBottom: "1px solid #f0f0f0",
-      backgroundColor: "#fafafa", // Slight background for children area
-      cursor: "pointer",
+      backgroundColor: level % 2 === 0 ? "#fafafa" : "#ffffff", // Alternate bg for levels
+      minHeight: "45px", // Approximate AntD row height
+      alignItems: "center",
     };
+
     const cellStyle: React.CSSProperties = {
-      padding: cellPadding,
+      padding: "10px 8px", // Adjusted padding
       whiteSpace: "nowrap",
       overflow: "hidden",
       textOverflow: "ellipsis",
+      boxSizing: "border-box",
+      lineHeight: "1.5715", // AntD default line height
+      fontSize: "13px", // Slightly smaller font for sub-rows
     };
 
+    const currentTotalRowIndent = baseIndent * level; // Total indent for the row content itself
+
     return (
-      <div style={{ margin: "0", paddingLeft: "48px" /* Indent for child section */ }}>
-        {/* Optional: Render a simple header for children if needed */}
-        {/* <div style={{ display: "flex", borderBottom: "1px solid #e8e8e8", fontWeight: "bold", backgroundColor: "#fafafa" }}>
-          <div style={{ ...cellStyle, width: "130px" }}>Kode Anak</div>
-          <div style={{ ...cellStyle, flexGrow: 1 }}>Nama Anak</div>
-          <div style={{ ...cellStyle, width: "180px" }}>Tipe</div>
-          <div style={{ ...cellStyle, flexGrow: 1 }}>Notes</div>
-          <div style={{ ...cellStyle, width: "130px", textAlign: "right" }}>Saldo</div>
-        </div> */}
-        {parentRecord.children.map((childAccount) => (
-          <div
-            key={childAccount.id}
-            style={childRowStyle}
-            onClick={(event) => {
-              event.stopPropagation();
-              onRowClick(childAccount);
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#fafafa"}
-          >
-            <div style={{ ...cellStyle, width: columns[0].width as number - 20 || 130 /* Kode */ }}>{childAccount.code}</div>
-            <div style={{ ...cellStyle, flexGrow: 1 /* Nama Akun */ }}>{childAccount.name}</div>
-            <div style={{ ...cellStyle, width: columns[2].width as number -20 || 180 /* Tipe */ }}>{childAccount.type?.name}</div>
-            <div style={{ ...cellStyle, flexGrow: 1 /* Notes */ }}>{childAccount.notes}</div>
-            <div style={{ ...cellStyle, width: columns[4].width as number -20 || 130, textAlign: "right" /* Saldo */ }}>
-              {/* Format balance if needed */}
-              {childAccount.balance}
-            </div>
+      <React.Fragment key={account.id}>
+        <div
+          style={{...rowStyle, paddingLeft: `${currentTotalRowIndent}px`}} // Row starts with its level's indent
+          onClick={(e) => { e.stopPropagation(); onRowClick(account);}}
+          className="manual-account-row hover:bg-blue-50" // Example Tailwind hover
+        >
+          {/* Expand Icon Cell for sub-rows */}
+          <div style={{ ...cellStyle, width: `${expandIconCellWidth}px`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '0', paddingRight: '0' }}>
+            {canExpand && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (parentOfThisAccount) {
+                     onExpandSubRow(!isExpanded, parentOfThisAccount, account);
+                  }
+                }}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '0', fontSize: '12px', color: '#555' }}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? "Collapse row" : "Expand row"}
+              >
+                {isExpanded ? "▼" : "►"}
+              </button>
+            )}
           </div>
-        ))}
-      </div>
+
+          {/* Data Cells */}
+          <div style={{ ...cellStyle, width: `${денегНет - (level > 0 ? expandIconCellWidth/2 : 0) }px`, flexShrink: 0 }}>{account.code}</div>
+          <div style={{ ...cellStyle, flexGrow: 1, minWidth: '150px' }}>{account.name}</div>
+          <div style={{ ...cellStyle, width: `${typeWidth}px`, flexShrink: 0 }}>{account.type?.name}</div>
+          <div style={{ ...cellStyle, flexGrow: 1, minWidth: '100px' }}>{account.notes || '-'}</div>
+          <div style={{ ...cellStyle, width: `${balanceWidth}px`, textAlign: "right", flexShrink: 0 }}>
+            {account.balance != null ? account.balance.toLocaleString() : '-'}
+          </div>
+        </div>
+        {/* Recursive Call for Children */}
+        {isExpanded && account.children && (
+          <div>
+            {account.children.length > 0 ? (
+              account.children.map(child => renderAccountRow(child, level + 1, account))
+            ) : (
+              <div style={{ padding: `12px 8px 12px ${currentIndent + baseIndent + expandIconCellWidth}px`, fontStyle: "italic", color: "#888", backgroundColor: level % 2 === 0 ? "#fafafa" : "#ffffff" }}>
+                Tidak ada sub-akun.
+              </div>
+            )}
+          </div>
+        )}
+         {isExpanded && !account.children && canExpand && (
+             <div style={{ padding: `12px 8px 12px ${currentIndent + baseIndent + expandIconCellWidth}px`, fontStyle: "italic", color: "#888", backgroundColor: level % 2 === 0 ? "#fafafa" : "#ffffff" }}>
+               Memuat sub-akun...
+             </div>
+        )}
+      </React.Fragment>
     );
+  };
+
+
+  const expandedRowRenderAntD = (record: Account) => {
+    if (!record.children) {
+        if (record.has_children === false || (typeof record.children_count === 'number' && record.children_count === 0)) {
+            return <div style={{ padding: "12px 8px", fontStyle: "italic", color: "#888" }}>Tidak ada sub-akun.</div>;
+        }
+        return <div style={{ padding: "12px 8px", fontStyle: "italic", color: "#888" }}>Memuat sub-akun...</div>;
+    }
+    if (record.children.length === 0) {
+        return <div style={{ padding: "12px 8px", fontStyle: "italic", color: "#888" }}>Tidak ada sub-akun.</div>;
+    }
+    // Pass the parent record (record from AntD table) to renderAccountRow
+    return record.children.map(child => renderAccountRow(child, 1, record));
   };
 
   return (
@@ -107,7 +154,7 @@ export function AccountsTable({
         loading={loading}
         pagination={false}
         onRow={(record) => ({
-          onClick: () => onRowClick(record),
+          onClick: () => onRowClick(record), // This is for the main AntD row
           style: { cursor: "pointer" },
         })}
         rowSelection={{
@@ -117,9 +164,19 @@ export function AccountsTable({
         expandable={{
           expandedRowKeys: expandedRowKeys,
           onExpand: onExpand,
-          rowExpandable: (record) =>
-            record.has_children || (record.children && record.children.length > 0) || record.children_count > 0,
-          expandedRowRender: expandedRowRender,
+          rowExpandable: (record) => {
+            console.log(`Account ID: ${record.id}, Name: ${record.name}, has_children: ${record.has_children} (type: ${typeof record.has_children}), children_count: ${record.children_count} (type: ${typeof record.children_count}), children prop defined: ${record.children !== undefined}`);
+
+            const hasChildrenFlag = record.has_children === true;
+            const positiveChildrenCount = typeof record.children_count === 'number' && record.children_count > 0;
+            const childrenLoadedAndPresent = Array.isArray(record.children) && record.children.length > 0;
+
+            const shouldExpand = hasChildrenFlag || positiveChildrenCount || childrenLoadedAndPresent;
+            // console.log(`ID: ${record.id}, shouldExpand: ${shouldExpand}`);
+            return shouldExpand;
+          },
+          // expandedRowRender is now completely removed.
+          // AntD should use its default mechanism for rendering 'children' if data source has it.
           // expandIcon: ({ expanded, onExpand, record }) => ... custom icon if needed
         }}
       />
