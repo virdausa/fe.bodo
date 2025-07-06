@@ -117,6 +117,16 @@ const AccountsPage: NextPage = () => {
   };
 
   const handleDeleteMultiple = async () => {
+    // Second layer of defense: check again before actually deleting
+    const accountsToDeleteDetails = selectedRowKeys.map(key => data.find(acc => acc.id === key)).filter(Boolean) as Account[];
+    const hasParentWithChildren = accountsToDeleteDetails.some(account => account.has_children || (account.children_count && account.children_count > 0));
+
+    if (hasParentWithChildren) {
+      toast.error("Tidak dapat menghapus akun. Salah satu akun yang dipilih memiliki sub-akun.");
+      setIsDeleteModalOpen(false); // Close the confirmation modal
+      return;
+    }
+
     await toast.promise(accountService.deleteAccounts(selectedRowKeys), {
       loading: "Sedang menghapus akun terpilih...",
       success: () => {
@@ -202,12 +212,17 @@ const AccountsPage: NextPage = () => {
       <Flex
         style={{ margin: "8px 16px" }}
       >
-        {selectedRowKeys.length > 0 ? (
-          <Button danger onClick={() => setIsDeleteModalOpen(true)}>
+        {selectedRowKeys.length > 0 && (
+          <Button
+            danger
+            onClick={() => setIsDeleteModalOpen(true)}
+            disabled={selectedRowKeys.some(key => {
+              const account = data.find(acc => acc.id === key);
+              return account && (account.has_children || (account.children_count && account.children_count > 0));
+            })}
+          >
             Hapus Terpilih ({selectedRowKeys.length})
           </Button>
-        ) : (
-          <div />
         )}
       </Flex>
 

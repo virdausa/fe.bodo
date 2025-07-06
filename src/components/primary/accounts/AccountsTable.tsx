@@ -13,6 +13,7 @@ interface AccountsTableProps {
 }
 
 const columns: TableProps<Account>["columns"] = [
+  Table.EXPAND_COLUMN, // Explicitly add the expand column
   { title: "Kode", dataIndex: "code", key: "code", width: 150 },
   { title: "Nama Akun", dataIndex: "name", key: "name", ellipsis: true },
   {
@@ -26,22 +27,8 @@ const columns: TableProps<Account>["columns"] = [
   { title: "Saldo", dataIndex: "balance", key: "balance", width: 150, align: "right" },
 ];
 
-// Define columns for the sub-table (children)
-// These can be the same or a subset of the main columns
-const childColumns: TableProps<Account>["columns"] = [
-    { title: "Kode", dataIndex: "code", key: "code", width: 130 }, // Slightly less width for indentation
-    { title: "Nama Akun", dataIndex: "name", key: "name", ellipsis: true },
-    {
-      title: "Tipe",
-      dataIndex: ["type", "name"],
-      key: "type.name",
-      width: 180,
-      ellipsis: true,
-    },
-    { title: "Notes", dataIndex: "notes", key: "notes", ellipsis: true },
-    { title: "Saldo", dataIndex: "balance", key: "balance", width: 130, align: "right" },
-  ];
-
+// childColumns might not be needed if we are manually rendering rows.
+// However, we can use its structure to define the layout if desired.
 
 export function AccountsTable({
   loading,
@@ -52,35 +39,62 @@ export function AccountsTable({
   expandedRowKeys,
   onExpand,
 }: AccountsTableProps) {
-  const expandedRowRender = (record: Account) => {
-    // Check if children exist and have data
-    if (!record.children || record.children.length === 0) {
-      // If has_children was true but children array is empty after loading,
-      // it means no children were found.
-      // If has_children was initially false, this part might not even be reached
-      // depending on rowExpandable logic.
-      return <p style={{ margin: 0, paddingLeft: "48px" }}>Tidak ada sub-akun.</p>;
+  const expandedRowRender = (parentRecord: Account) => {
+    if (!parentRecord.children || parentRecord.children.length === 0) {
+      return <div style={{ padding: "12px", paddingLeft: "48px", backgroundColor: "#fafafa" }}>Tidak ada sub-akun.</div>;
     }
 
+    // Manual rendering of child rows
+    // We'll try to mimic the main table's column widths approximately for alignment.
+    // These widths correspond to the `columns` definition for the main table.
+    // Kode: 150, Nama Akun: auto (ellipsis), Tipe: 200, Notes: auto (ellipsis), Saldo: 150
+    // For children, we might want to indent them slightly.
+    const cellPadding = "8px 12px"; // Consistent padding for cells
+    const childRowStyle: React.CSSProperties = {
+      display: "flex",
+      borderBottom: "1px solid #f0f0f0",
+      backgroundColor: "#fafafa", // Slight background for children area
+      cursor: "pointer",
+    };
+    const cellStyle: React.CSSProperties = {
+      padding: cellPadding,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    };
+
     return (
-      <Table
-        columns={childColumns}
-        dataSource={record.children}
-        rowKey="id"
-        pagination={false}
-        size="small"
-        showHeader={false} // Optionally hide header for sub-table to make it cleaner
-        onRow={(childRecord) => ({
-          onClick: (event) => {
-            event.stopPropagation(); // Prevent parent row's onRowClick
-            onRowClick(childRecord); // Allow clicking on child rows
-          },
-          style: { cursor: "pointer" },
-        })}
-        // Child rows should not be selectable if selection is only for parent level,
-        // or needs different handling. For simplicity, disabling selection on children here.
-        // rowSelection={{}}
-      />
+      <div style={{ margin: "0", paddingLeft: "48px" /* Indent for child section */ }}>
+        {/* Optional: Render a simple header for children if needed */}
+        {/* <div style={{ display: "flex", borderBottom: "1px solid #e8e8e8", fontWeight: "bold", backgroundColor: "#fafafa" }}>
+          <div style={{ ...cellStyle, width: "130px" }}>Kode Anak</div>
+          <div style={{ ...cellStyle, flexGrow: 1 }}>Nama Anak</div>
+          <div style={{ ...cellStyle, width: "180px" }}>Tipe</div>
+          <div style={{ ...cellStyle, flexGrow: 1 }}>Notes</div>
+          <div style={{ ...cellStyle, width: "130px", textAlign: "right" }}>Saldo</div>
+        </div> */}
+        {parentRecord.children.map((childAccount) => (
+          <div
+            key={childAccount.id}
+            style={childRowStyle}
+            onClick={(event) => {
+              event.stopPropagation();
+              onRowClick(childAccount);
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#fafafa"}
+          >
+            <div style={{ ...cellStyle, width: columns[0].width as number - 20 || 130 /* Kode */ }}>{childAccount.code}</div>
+            <div style={{ ...cellStyle, flexGrow: 1 /* Nama Akun */ }}>{childAccount.name}</div>
+            <div style={{ ...cellStyle, width: columns[2].width as number -20 || 180 /* Tipe */ }}>{childAccount.type?.name}</div>
+            <div style={{ ...cellStyle, flexGrow: 1 /* Notes */ }}>{childAccount.notes}</div>
+            <div style={{ ...cellStyle, width: columns[4].width as number -20 || 130, textAlign: "right" /* Saldo */ }}>
+              {/* Format balance if needed */}
+              {childAccount.balance}
+            </div>
+          </div>
+        ))}
+      </div>
     );
   };
 

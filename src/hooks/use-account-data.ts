@@ -24,6 +24,7 @@ export function useAccountsData() {
             start: (currentPage - 1) * currentPageSize,
             length: currentPageSize,
             q: keyword,
+            parent_only: true, // Always fetch only parent accounts for the main table
             // We are assuming the backend now includes has_children or children_count
             // in the response for each account within `json.data`.
           },
