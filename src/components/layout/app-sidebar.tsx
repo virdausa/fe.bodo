@@ -62,12 +62,19 @@ const items: IMainNav[] = [
   {
     title: "Transaksi",
     icon: Grid2x2,
-    items: [{ title: "Journal Umum", url: "/transaction/journal_accounts" }],
+    items: [
+      { title: "Penjualan", url: "/transaction/trades?tr_type=sale" },
+      { title: "Pembelian", url: "/transaction/trades?tr_type=purchase" },
+      { title: "Jurnal Umum", url: "/transaction/journal_accounts" },
+    ],
   },
   {
     title: "Penyimpanan",
     icon: Grid2x2,
-    items: [{ title: "Accounts", url: "/inventory/accounts" }],
+    items: [
+      { title: "Accounts", url: "/inventory/accounts" },
+      { title: "Items", url: "/inventory/items" },
+    ],
   },
   {
     title: "Lahan",
