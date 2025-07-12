@@ -43,10 +43,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { signOut } from "@/api/services/auth.service";
 
-import { useUserStore } from "@/providers/user.provider";
-
-
-
 interface INavItem {
   title: string;
   url: string;
@@ -90,8 +86,14 @@ const items: IMainNav[] = [
     title: "Laporan",
     icon: Grid2x2,
     items: [
-      { title: "Neraca", url: "/inventory/accounts/summaries?summary_type=balance_sheet" },
-      { title: "Laba Rugi", url: "/inventory/accounts/summaries?summary_type=profit_loss" },
+      {
+        title: "Neraca",
+        url: "/inventory/accounts/summaries?summary_type=balance_sheet",
+      },
+      {
+        title: "Laba Rugi",
+        url: "/inventory/accounts/summaries?summary_type=profit_loss",
+      },
     ],
   },
   // {
@@ -112,8 +114,6 @@ const items: IMainNav[] = [
 ];
 
 function AppSidebar() {
-  const { user } = useUserStore((state) => state);
-
   return (
     <Sidebar>
       <SidebarHeader>
@@ -122,8 +122,10 @@ function AppSidebar() {
             <AvatarImage className="size-14" src="/svg/hehe.svg" />
             <AvatarFallback className="size-14">JD</AvatarFallback>
           </Avatar>
-          <span className="font-semibold">{user.name}</span>
-          <span className="text-muted-foreground text-xs">as {user.email}</span>
+          <span className="font-semibold">John Doe</span>
+          <span className="text-muted-foreground text-xs">
+            johndoe@email.com
+          </span>
         </div>
       </SidebarHeader>
       <Separator />
