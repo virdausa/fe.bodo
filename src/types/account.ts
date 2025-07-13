@@ -10,7 +10,10 @@ interface Account {
   notes?: string;
   type_id: number | string;
   type: AccountType;
-  parent_id?: number | string;
+  parent_id?: number | string | null;
+  children?: Account[] | null;
+  has_children?: boolean;
+  children_count?: number;
 }
 
 interface ApiDataTable {

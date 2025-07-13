@@ -38,7 +38,6 @@ async function getAccountTypes(): Promise<{ data: AccountType[] }> {
 async function searchParentAccounts(query: string): Promise<ApiDataTable> {
   const response = await api.get("accounts/search", {
     searchParams: {
-      space_id: 1, // Assuming space_id is static for now
       q: query,
     },
   });
@@ -62,9 +61,9 @@ async function saveAccount(
   accountData: Partial<Account>,
   accountId: number | string | null,
 ): Promise<ApiResponse> {
-  const payload = { ...accountData, space_id: 1 };
+  const payload = { ...accountData };
   if (!payload.parent_id) {
-    payload.parent_id = undefined;
+    payload.parent_id = null;
   }
 
   const response = accountId

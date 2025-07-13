@@ -15,20 +15,24 @@ import { useAccountsData } from "@/hooks/use-account-data";
 import { AccountsTable } from "@/components/primary/accounts/AccountsTable";
 import { AccountFormModal } from "@/components/primary/accounts/AccountFormModal";
 import { accountService } from "@/api/services/accounts.service";
-import { Account, AccountType } from "@/types/account";
+import { Account, AccountType, ApiDataTable } from "@/types/account";
+
+import { api } from "@/api";
+import { findSourceMap } from "module";
 
 const AccountsPage: NextPage = () => {
-  const {
-    data,
-    loading,
-    total,
-    page,
-    pageSize,
-    handlePaginationChange,
-    refreshAccounts,
-    search,
-    setSearch,
-  } = useAccountsData();
+  // const {
+  //   data,
+  //   // loading,
+  //   total,
+  //   page,
+  //   pageSize,
+  //   handlePaginationChange,
+  //   fetchRootAccounts,
+  //   // search,
+  //   // setSearch,
+  // } = useAccountsData();
+
   const [form] = Form.useForm();
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -37,6 +41,117 @@ const AccountsPage: NextPage = () => {
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+
+  const [accountsTree, setAccountsTree] = useState<Account[]>([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
+
+
+  // pagination
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [total, setTotal] = useState<number>(0);
+
+
+  const fetchRootAccounts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("accounts/data", {
+        searchParams: {
+          parent_only: "true",
+          q: search,
+          start: (page - 1) * pageSize,
+          length: pageSize,
+          limit: "all",
+        },
+      });
+      const json: ApiDataTable = await res.json();
+      console.log("data", json.data);
+
+      const sanitized = json.data.map((acc: Account) => {
+        return {
+          ...acc,
+          children: acc.has_children ? acc.children : null,
+        };
+      });
+
+      setAccountsTree(sanitized);
+      setTotal(json.recordsFiltered);
+      
+      setExpandedRowKeys([]);
+    } catch (err) {
+      console.error("Gagal fetch akun root", err);
+      toast.error("Gagal memuat akun utama");
+    } finally {
+      setLoading(false);
+    }
+  }, [search, page, pageSize]);
+
+
+
+  function insertChildren(tree: Account[], parentId: number | string, children: Account[]): Account[] {
+    return tree.map(node => {
+      if (node.id === parentId) {
+        return {
+          ...node,
+          children,
+        };
+      } else if (node.children) {
+        return {
+          ...node,
+          children: insertChildren(node.children, parentId, children),
+        };
+      }
+      return node;
+    });
+  }
+
+
+  const handleExpand = async (expanded: boolean, record: Account) => {
+    if (expanded) {
+      try {
+        const res = await api.get("accounts/data", {
+          searchParams: {
+            parent_id: record.id,
+            q: '',
+            limit: 'all',
+          },
+        });
+        const json: ApiDataTable = await res.json();
+
+        const sanitized = json.data.map((acc: Account) => {
+          return {
+            ...acc,
+            children: acc.has_children ? acc.children : null,
+          };
+        });
+
+        setAccountsTree(prev => insertChildren(prev, record.id, sanitized));
+      } catch (err) {
+        console.error("Gagal memuat anak akun", err);
+        toast.error("Gagal memuat anak akun");
+      }
+    }
+
+    setExpandedRowKeys(prev =>
+      expanded
+        ? [...prev, record.id]
+        : prev.filter(key => key !== record.id)
+    );
+
+    console.log("expanded", expanded, record);
+  };
+
+
+
+  const handlePaginationChange = (newPage: number, newPageSize: number) => {
+    setPage(newPage);
+    setPageSize(newPageSize);
+  };
+
+
+
 
   const fetchDropdowns = useCallback(async () => {
     try {
@@ -50,7 +165,10 @@ const AccountsPage: NextPage = () => {
 
   useEffect(() => {
     fetchDropdowns();
-  }, [fetchDropdowns]);
+    fetchRootAccounts();
+  }, [fetchDropdowns, fetchRootAccounts]);
+
+
 
   const handleSearchParent = useCallback(async (value: string) => {
     if (!value) return;
@@ -94,12 +212,17 @@ const AccountsPage: NextPage = () => {
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
+
+      if (values.parent_id === "") {
+        values.parent_id = null;
+      }
+
       await toast.promise(
         accountService.saveAccount(values, selectedAccount?.id || null),
         {
           loading: "Sedang menyimpan akun...",
           success: (result) => {
-            refreshAccounts();
+            fetchRootAccounts();
             setIsModalOpen(false);
             setSelectedAccount(null);
             return result.toast || "Berhasil menyimpan akun";
@@ -114,17 +237,27 @@ const AccountsPage: NextPage = () => {
   };
 
   const handleDeleteMultiple = async () => {
+    // const selectedAccounts = accountsTree.flatMap(acc => 
+
+    // const hasChild = selectedAccounts.some(acc => acc.has_children);
+    // if (hasChild) {
+    //   toast.error("Tidak dapat menghapus akun yang memiliki anak.");
+    //   return;
+    // }
+
     await toast.promise(accountService.deleteAccounts(selectedRowKeys), {
       loading: "Sedang menghapus akun terpilih...",
       success: () => {
         setSelectedRowKeys([]);
         setIsDeleteModalOpen(false);
-        refreshAccounts();
+        fetchRootAccounts();
         return "Akun terpilih berhasil dihapus";
       },
       error: "Gagal menghapus akun.",
     });
   };
+
+
 
   return (
     <Card>
@@ -151,7 +284,7 @@ const AccountsPage: NextPage = () => {
           onChange={(e) => setSearch(e.target.value)}
           onSearch={(value) => {
             setSearch(value);
-            refreshAccounts();
+            fetchRootAccounts();
           }}
           style={{ width: "300px" }}
         />
@@ -172,10 +305,12 @@ const AccountsPage: NextPage = () => {
       <CardContent className="space-y-4">
         <AccountsTable
           loading={loading}
-          data={data}
+          data={accountsTree}
           selectedRowKeys={selectedRowKeys}
           onRowClick={handleRowClick}
           onSelectionChange={setSelectedRowKeys}
+          expandedRowKeys={expandedRowKeys}
+          onExpand={handleExpand}
         />
         <div className="flex justify-end">
           <Pagination

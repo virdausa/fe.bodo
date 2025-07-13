@@ -1,5 +1,5 @@
 import { Table } from "antd";
-import type { TableProps } from "antd";
+import type { TableColumnsType } from "antd";
 import { Account } from "@/types/account";
 
 interface AccountsTableProps {
@@ -8,9 +8,12 @@ interface AccountsTableProps {
   selectedRowKeys: React.Key[];
   onRowClick: (record: Account) => void;
   onSelectionChange: (selectedKeys: React.Key[]) => void;
+  expandedRowKeys: React.Key[];
+  onExpand: (expanded: boolean, record: Account) => void;
 }
 
-const columns: TableProps<Account>["columns"] = [
+const columns: TableColumnsType<Account> = [
+  { title: "ID", dataIndex: "id", key: "id" },
   { title: "Kode", dataIndex: "code", key: "code" },
   { title: "Nama Akun", dataIndex: "name", key: "name" },
   {
@@ -28,6 +31,8 @@ export function AccountsTable({
   selectedRowKeys,
   onRowClick,
   onSelectionChange,
+  expandedRowKeys,
+  onExpand: handleExpand,
 }: AccountsTableProps) {
   return (
     <div className="overflow-x-auto">
@@ -37,6 +42,14 @@ export function AccountsTable({
         rowKey="id"
         loading={loading}
         pagination={false}
+        expandable={{
+          expandedRowKeys,
+          onExpand: handleExpand,
+          rowExpandable: (record) => {
+            console.log("checking expandable for", record.id, record.has_children);
+            return !!record.has_children;
+          }
+        }}
         onRow={(record) => ({
           onClick: () => onRowClick(record),
           style: { cursor: "pointer" },
@@ -44,6 +57,9 @@ export function AccountsTable({
         rowSelection={{
           selectedRowKeys,
           onChange: onSelectionChange,
+          getCheckboxProps: (record: Account) => ({
+            disabled: false,  
+          }),
         }}
       />
     </div>

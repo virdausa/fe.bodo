@@ -21,6 +21,8 @@ export function useAccountsData() {
             start: (currentPage - 1) * currentPageSize,
             length: currentPageSize,
             q: keyword,
+            limit: 'all',
+            parent_only: 'true',
           },
         });
 
