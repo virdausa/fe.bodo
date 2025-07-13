@@ -2,6 +2,8 @@ import { Table } from "antd";
 import type { TableColumnsType } from "antd";
 import { Account } from "@/types/account";
 
+
+
 interface AccountsTableProps {
   loading: boolean;
   data: Account[];
@@ -10,20 +12,10 @@ interface AccountsTableProps {
   onSelectionChange: (selectedKeys: React.Key[]) => void;
   expandedRowKeys: React.Key[];
   onExpand: (expanded: boolean, record: Account) => void;
+  setModalTransactionVisible: (visible: boolean) => void
+  onSaldoClick: (account: Account) => void
 }
 
-const columns: TableColumnsType<Account> = [
-  { title: "ID", dataIndex: "id", key: "id" },
-  { title: "Kode", dataIndex: "code", key: "code" },
-  { title: "Nama Akun", dataIndex: "name", key: "name" },
-  {
-    title: "Tipe",
-    dataIndex: ["type", "name"],
-    key: "type.name",
-  },
-  { title: "Notes", dataIndex: "notes", key: "notes" },
-  { title: "Saldo", dataIndex: "balance", key: "balance" },
-];
 
 export function AccountsTable({
   loading,
@@ -33,7 +25,34 @@ export function AccountsTable({
   onSelectionChange,
   expandedRowKeys,
   onExpand: handleExpand,
+  onSaldoClick,
 }: AccountsTableProps) {
+
+  const columns: TableColumnsType<Account> = [
+    { title: "ID", dataIndex: "id", key: "id" },
+    { title: "Kode", dataIndex: "code", key: "code" },
+    { title: "Nama Akun", dataIndex: "name", key: "name" },
+    {
+      title: "Tipe",
+      dataIndex: ["type", "name"],
+      key: "type.name",
+    },
+    // { title: "Notes", dataIndex: "notes", key: "notes" },
+    { title: "Saldo", key: "balance", render: (_, record) => (
+      <a
+        onClick={(e) => {
+          e.stopPropagation();
+          onSaldoClick(record);
+          console.log(record);
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        {record.balance || 0 }
+      </a>
+    )},
+  ];
+
+
   return (
     <div className="overflow-x-auto">
       <Table
@@ -57,7 +76,7 @@ export function AccountsTable({
         rowSelection={{
           selectedRowKeys,
           onChange: onSelectionChange,
-          getCheckboxProps: (record: Account) => ({
+          getCheckboxProps: () => ({
             disabled: false,  
           }),
         }}

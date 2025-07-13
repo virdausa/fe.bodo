@@ -11,28 +11,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAccountsData } from "@/hooks/use-account-data";
 import { AccountsTable } from "@/components/primary/accounts/AccountsTable";
 import { AccountFormModal } from "@/components/primary/accounts/AccountFormModal";
 import { accountService } from "@/api/services/accounts.service";
 import { Account, AccountType, ApiDataTable } from "@/types/account";
 
 import { api } from "@/api";
-import { findSourceMap } from "module";
+
+import { AccountTransactionModal } from "@/components/primary/accounts/AccountTransactionModal";
+
+
 
 const AccountsPage: NextPage = () => {
-  // const {
-  //   data,
-  //   // loading,
-  //   total,
-  //   page,
-  //   pageSize,
-  //   handlePaginationChange,
-  //   fetchRootAccounts,
-  //   // search,
-  //   // setSearch,
-  // } = useAccountsData();
-
   const [form] = Form.useForm();
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -52,6 +42,9 @@ const AccountsPage: NextPage = () => {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [total, setTotal] = useState<number>(0);
+
+
+  const [modalTransactionVisible, setModalTransactionVisible] = useState<boolean>(false);
 
 
   const fetchRootAccounts = useCallback(async () => {
@@ -311,6 +304,11 @@ const AccountsPage: NextPage = () => {
           onSelectionChange={setSelectedRowKeys}
           expandedRowKeys={expandedRowKeys}
           onExpand={handleExpand}
+          setModalTransactionVisible={setModalTransactionVisible}
+          onSaldoClick={(acc) => {
+            setSelectedAccount(acc);
+            setModalTransactionVisible(true);
+          }}
         />
         <div className="flex justify-end">
           <Pagination
@@ -351,6 +349,16 @@ const AccountsPage: NextPage = () => {
           Tindakan ini tidak bisa dibatalkan.
         </p>
       </Modal>
+
+
+      <AccountTransactionModal
+        visible={modalTransactionVisible}
+        onClose={() => setModalTransactionVisible(false)}
+        accountId={selectedAccount?.id || 0}
+        startDate={''}
+        endDate={''}
+        accountData={selectedAccount}
+      />
     </Card>
   );
 };

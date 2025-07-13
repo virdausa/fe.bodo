@@ -14,6 +14,8 @@ interface Account {
   children?: Account[] | null;
   has_children?: boolean;
   children_count?: number;
+  balance?: number;
+  status?: string;
 }
 
 interface ApiDataTable {
