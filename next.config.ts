@@ -5,9 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination:
-          `${process.env.BACKEND_URL}/api/:path*` ||
-          "https://api.nerpai.space/api/:path*", // Proxy to Backend
+        destination: `${process.env.BACKEND_URL}/api/:path*`,
       },
     ];
   },

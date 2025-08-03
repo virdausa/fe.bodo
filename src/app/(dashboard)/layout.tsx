@@ -4,7 +4,6 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { UserStoreProvider } from "@/providers/user.provider";
-import UserInitializer from "../../components/initializer/user-initializer";
 
 export default async function DashboardLayout({
   children,
@@ -22,7 +21,6 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <UserStoreProvider>
-        <UserInitializer />
         <AppSidebar />
         <div className="w-full">
           <Header />
