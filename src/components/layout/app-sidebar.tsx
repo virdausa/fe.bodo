@@ -60,6 +60,31 @@ interface IMainNav {
 
 const items: IMainNav[] = [
   {
+    title: "Lahan",
+    icon: Grid2x2,
+    items: [{ title: "Lahan", url: "/space/spaces" }],
+  },
+
+  {
+    title: "Persediaan",
+    icon: Grid2x2,
+    items: [
+      { title: "Daftar Barang", url: "/inventory/items" },
+      { title: "Daftar Akun Persediaan", url: "/inventory/supplies" },
+      { title: "Mutasi Stok", url: "/transaction/journal_supplies" },
+      { title: "Rangkuman Stok", url: "/inventory/supplies/summaries?summary_type=stockflow" },
+    ],
+  },
+
+  {
+    title: "Akuntansi",
+    icon: Grid2x2,
+    items: [
+      { title: "Accounts", url: "/inventory/accounts" },
+    ],
+  },
+
+  {
     title: "Transaksi",
     icon: Grid2x2,
     items: [
@@ -67,19 +92,6 @@ const items: IMainNav[] = [
       { title: "Pembelian", url: "/transaction/trades?tr_type=purchase" },
       { title: "Jurnal Umum", url: "/transaction/journal_accounts" },
     ],
-  },
-  {
-    title: "Penyimpanan",
-    icon: Grid2x2,
-    items: [
-      { title: "Accounts", url: "/inventory/accounts" },
-      { title: "Items", url: "/inventory/items" },
-    ],
-  },
-  {
-    title: "Lahan",
-    icon: Grid2x2,
-    items: [{ title: "Lahan", url: "/space/spaces" }],
   },
   {
     title: "Pemain",
